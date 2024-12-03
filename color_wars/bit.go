@@ -139,6 +139,14 @@ func ExtractTileInfo(tile byte) (dots byte, team byte) {
 	}
 }
 
+func SetTileInfo(dots byte, team byte) (tile byte) {
+	if dots == 0 {
+		return 0
+	}
+	// team 0 -> 0, team 1 -> 4
+	return team<<2 + dots
+}
+
 func ScoreBoard(board *[]byte, team byte) int8 {
 	var score int8 = 0
 	for i := 0; i < 13; i++ {
@@ -149,7 +157,7 @@ func ScoreBoard(board *[]byte, team byte) int8 {
 		if team1 == team {
 			score += int8(dots1)
 		} else {
-			score -= int8(dots1) * 2
+			score -= int8(dots1)
 		}
 
 		dots2, team2 := ExtractTileInfo(tile2)
@@ -157,7 +165,7 @@ func ScoreBoard(board *[]byte, team byte) int8 {
 		if team2 == team {
 			score += int8(dots2)
 		} else {
-			score -= int8(dots2) * 2
+			score -= int8(dots2)
 		}
 		// fmt.Println(dots1, team1, dots2, team2, score)
 	}
@@ -267,6 +275,67 @@ func PrintBoards(boards *[][]byte, team byte, depth byte) {
 		// RenderBoardBits(b)
 	}
 }
+
+// version 2
+
+// func GetNextBoardBestOption(board *[]byte, team byte, depth byte, maxDepth byte) {
+// 	if depth == maxDepth {
+// 		return
+// 	}
+// 	var bestBoard []byte
+// 	var bestScore int8
+// 	var scoreSign int8
+// 	if depth%2 == 0 { // even depth = minimise other players score
+// 		bestScore = 127
+// 		scoreSign = 1
+// 	} else { // odd depth = maximise your score
+// 		bestScore = -128
+// 		scoreSign = -1
+// 	}
+
+// 	// add a dot to each tile owned by the team
+// 	for i := 0; i < 13; i++ {
+// 		twoTiles := (*board)[i]
+// 		tile1, tile2 := twoTiles>>4, twoTiles&0b00001111
+// 		team1 := (tile1 - 1) >> 2
+
+// 		if team1 == team {
+// 			boardCopy := make([]byte, 13)
+// 			copy(boardCopy, *board)
+// 			boardCopy[i] += 0b00010000 // add a dot to the tile
+// 			for UpdateBoard(&boardCopy) {
+// 				// keep updating until no more updates
+// 			}
+// 			score := ScoreBoard(&boardCopy, team) * scoreSign
+// 			if score > bestScore { // which equality???
+// 				bestScore = score
+// 				bestBoard = boardCopy
+// 			}
+// 		}
+
+// 		team2 := (tile2 - 1) >> 2
+// 		if team2 == team {
+// 			boardCopy := make([]byte, 13)
+// 			copy(boardCopy, *board)
+// 			boardCopy[i] += 0b00000001 // add a dot to the tile
+// 			for UpdateBoard(&boardCopy) {
+// 				// keep updating until no more updates
+// 			}
+// 			score := ScoreBoard(&boardCopy, team) * scoreSign
+// 			if score > bestScore { // which equality???
+// 				bestScore = score
+// 				bestBoard = boardCopy
+// 			}
+// 		}
+// 	}
+
+// 	n := len(boards)
+// 	numOptionsGenerated += n
+// 	nextTeam := (team + 1) % 2
+// 	for i := 0; i < n; i++ {
+// 		GenerateNextBoardOptions(&boards[i], nextTeam, depth+1, maxDepth)
+// 	}
+// }
 
 func RunBit() {
 	fmt.Println("\n\n-------------------------------- COLORS WARS --------------------------------\n\n")
