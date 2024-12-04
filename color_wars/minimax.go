@@ -80,6 +80,21 @@ var alphaIndex = 0
 var alphaBoard, betaBoard *[]byte
 var nodesSearched = 0
 
+func MiniMaxWrapper(maxDepth byte,
+	board *[]byte, team byte) (r bool, x, y int) {
+	alphaIndex = 0
+	alphaBoard = nil
+	minimax3(0, maxDepth, -128, 127, board, team)
+	if alphaBoard != nil {
+		r = true
+		x, y = alphaIndex%5, alphaIndex/5
+	} else {
+		r = false
+		x, y = 0, 0
+	}
+	return
+}
+
 func minimax3(depth, maxDepth byte, alpha, beta int8,
 	board *[]byte, team byte,
 ) int8 {
