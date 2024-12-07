@@ -77,13 +77,14 @@ func minimax2(depth, maxDepth byte, alpha, beta int8) int8 {
 }
 
 var alphaIndex = 0
-var alphaBoard, betaBoard *[]byte
+var alphaBoard *[]byte
 var nodesSearched = 0
 
 func MiniMaxWrapper(maxDepth byte,
 	board *[]byte, team byte) (r bool, x, y int) {
 	alphaIndex = 0
 	alphaBoard = nil
+	nodesSearched = 0
 	minimax3(0, maxDepth, -128, 127, board, team)
 	if alphaBoard != nil {
 		r = true
@@ -92,6 +93,7 @@ func MiniMaxWrapper(maxDepth byte,
 		r = false
 		x, y = 0, 0
 	}
+	fmt.Println("minimax [nodesSearched]", nodesSearched)
 	return
 }
 
@@ -99,8 +101,28 @@ func minimax3(depth, maxDepth byte, alpha, beta int8,
 	board *[]byte, team byte,
 ) int8 {
 	nodesSearched += 1
+	// fmt.Println("minimax3", nodesSearched)
+	isBoardEmpty := false
+	onlyOneMove := false
+	currentTeam := (team + depth) % 2
+	if depth == 0 {
+		numTeamTiles, _ := CountTilesOfTeam(board, currentTeam)
+		if numTeamTiles == 1 {
+			onlyOneMove = true
+		}
+	}
+	if depth <= 1 {
+		// in the first two moves, check if the board is empty
+		posScore, _ := ScoreBoardOfTeam(board, currentTeam)
+		if posScore == 0 {
+			isBoardEmpty = true
+			// fmt.Println("empty board", team)
+		}
+	}
 	if depth == maxDepth {
+		
 		score := ScoreBoard(board, team)
+		// fmt.Println("hit max depth", depth, team, score)
 		// fmt.Print(score, " ")
 		// fmt.Println(depth, score)
 		// PrintAssignableByteArray(board)
@@ -109,7 +131,7 @@ func minimax3(depth, maxDepth byte, alpha, beta int8,
 	}
 
 	dotBitMasks := [2]byte{0b00010000, 0b00000001}
-	currentTeam := (team + depth) % 2
+	
 
 PerTwoTilesLoop:
 	for i := 0; i < 13; i++ {
@@ -119,27 +141,47 @@ PerTwoTilesLoop:
 		for j := 0; j < 2; j++ {
 			tile := tiles[j]
 			teamOfTile := (tile - 1) >> 2
-			if teamOfTile != currentTeam {
+			if isBoardEmpty {
+				// if board is empty for user
+				// then tiles with dots belong to other team
+				dots, _  := ExtractTileInfo(tile)
+				if dots > 0 {
+					continue
+				}
+			} else if teamOfTile != currentTeam {
 				continue
 			}
 
 			boardCopy := make([]byte, 13)
 			copy(boardCopy, *board)
-			boardCopy[i] += dotBitMasks[j] // add a dot to the tile
+			if isBoardEmpty {
+				// fmt.Println("set first tile", team, i, j)
+				SetTileByIndex(&boardCopy, byte(i*2+j), SetTileInfo(3, currentTeam))
+				// boardCopy[i] += SetTileInfo(3, currentTeam) // set 3 dots to the tile
+			} else {
+				boardCopy[i] += dotBitMasks[j] // add a dot to the tile
+			}
+			
 			for UpdateBoard(&boardCopy) {
 				// keep updating until no more updates
 			}
 
 			// score1 := ScoreBoard(&boardCopy, team)
-			// fmt.Println(depth, i, j, score1)
-			// RenderBoard(&boardCopy)
+		
 
 			score := minimax3(depth+1, maxDepth, alpha, beta, &boardCopy, team)
+
+			// fmt.Println("d, s", depth, score)
+			// RenderBoard(board)
+			// RenderBoard(&boardCopy)
 			if depth%2 == 0 {
+				// fmt.Println("here", depth, score)
 				// Maximizing player
-				if score > alpha {
+				if score > alpha || (onlyOneMove && score == alpha) {
+					// if only one move we just want the alphaIndex
 					alpha = score
 					if depth == 0 {
+						// fmt.Println("alphaBoard", depth, alpha)
 						alphaBoard = &boardCopy
 						alphaIndex = i*2 + j
 					}
@@ -149,15 +191,18 @@ PerTwoTilesLoop:
 				// Minimizing player
 				if score < beta {
 					beta = score
-					if depth == 0 {
-						betaBoard = &boardCopy
-					}
+					// if depth == 0 {
+					// 	betaBoard = &boardCopy
+					// }
 				}
 			}
-
+			if i+1 == 13 {
+				// fmt.Println("end of loop", depth, i, j, alpha, beta)
+				break PerTwoTilesLoop
+			}
 			// Pruning
-			if doPrune && alpha >= beta && i+1 < 13 {
-				// fmt.Println("prune", depth, alpha, beta)
+			if (doPrune && alpha >= beta) {
+				// fmt.Println("prune", depth, alpha, beta, score)
 				break PerTwoTilesLoop
 			}
 		}

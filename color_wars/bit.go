@@ -94,8 +94,7 @@ func RenderBoardBits(board *[]byte) {
 
 // GAME
 
-func SetTile(board *[]byte, x, y byte, tile byte) {
-	i := x + y*5
+func SetTileByIndex(board *[]byte, i, tile byte) {
 	bi := i >> 1
 	ti := i % 2
 	// fmt.Println(i, bi, ti)
@@ -105,6 +104,11 @@ func SetTile(board *[]byte, x, y byte, tile byte) {
 	} else {
 		(*board)[bi] = tile + (*board)[bi]&0b11110000
 	}
+}
+
+func SetTile(board *[]byte, x, y byte, tile byte) {
+	i := x + y*5
+	SetTileByIndex(board, i, tile)
 }
 
 func GetTile(board *[]byte, x, y byte) (dots byte, team byte) {
@@ -170,6 +174,60 @@ func ScoreBoard(board *[]byte, team byte) int8 {
 		// fmt.Println(dots1, team1, dots2, team2, score)
 	}
 	return score
+}
+
+func CountTilesOfTeam(board *[]byte, team byte) (posScore int8, negScore int8) {
+	posScore, negScore = 0, 0
+	for i := 0; i < 13; i++ {
+		twoTiles := (*board)[i]
+		tile1, tile2 := twoTiles>>4, twoTiles&0b00001111
+		dots1, team1 := ExtractTileInfo(tile1)
+		if dots1 > 0 {
+			if team1 == team {
+				posScore ++
+			} else {
+				negScore --
+			}
+		}
+	
+
+		dots2, team2 := ExtractTileInfo(tile2)
+
+		if dots2 > 0 {
+			if team2 == team {
+				posScore ++
+			} else {
+				negScore --
+			}
+		}
+		// fmt.Println(dots1, team1, dots2, team2, score)
+	}
+	return
+}
+
+func ScoreBoardOfTeam(board *[]byte, team byte) (posScore int8, negScore int8) {
+	posScore, negScore = 0, 0
+	for i := 0; i < 13; i++ {
+		twoTiles := (*board)[i]
+		tile1, tile2 := twoTiles>>4, twoTiles&0b00001111
+		dots1, team1 := ExtractTileInfo(tile1)
+
+		if team1 == team {
+			posScore += int8(dots1)
+		} else {
+			negScore -= int8(dots1)
+		}
+
+		dots2, team2 := ExtractTileInfo(tile2)
+
+		if team2 == team {
+			posScore += int8(dots2)
+		} else {
+			negScore -= int8(dots2)
+		}
+		// fmt.Println(dots1, team1, dots2, team2, score)
+	}
+	return
 }
 
 func GenerateNextBoardOptions(board *[]byte, team byte, depth byte) {
