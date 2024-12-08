@@ -188,7 +188,7 @@ const updateTeamBackground = () => {
     if (teamToPlay == 'team1') {
         botStatusElement.style.backgroundColor = 'hsla(0, 100%, 50%, 1)'
     } else {
-        botStatusElement.style.backgroundColor = 'hsla(135, 100%, 50%, 1)'
+        botStatusElement.style.backgroundColor = 'hsla(105, 100%, 50%, 1)'
     }
 }
 

@@ -160,7 +160,8 @@ var boardWeights = []byte{
 }
 
 func ScoreBoardWeighted(board *[]byte, team byte) int16 {
-	var score int16 = 0
+	var posScore int16 = 0
+	var negScore int16 = 0
 	for i := 0; i < 13; i++ {
 		twoTiles := (*board)[i]
 		tile1, tile2 := twoTiles>>4, twoTiles&0b00001111
@@ -169,9 +170,9 @@ func ScoreBoardWeighted(board *[]byte, team byte) int16 {
 		if dots1 > 0 {
 			if team1 == team {
 				// fmt.Println(dots1, boardWeights[i*2], int16(dots1) * 5, int16(boardWeights[i*2]))
-				score += int16(dots1) * 6 + int16(boardWeights[i*2])
+				posScore += int16(dots1)*6 + int16(boardWeights[i*2])
 			} else {
-				score -= int16(dots1)* 6 + int16(boardWeights[i*2])
+				negScore -= int16(dots1)*6 + int16(boardWeights[i*2])
 			}
 		}
 
@@ -182,14 +183,19 @@ func ScoreBoardWeighted(board *[]byte, team byte) int16 {
 
 		if dots2 > 0 {
 			if team2 == team {
-				score += int16(dots2) * 6 + int16(boardWeights[i*2+1])
+				posScore += int16(dots2)*6 + int16(boardWeights[i*2+1])
 			} else {
-				score -= int16(dots2) * 6 + int16(boardWeights[i*2+1])
+				negScore -= int16(dots2)*6 + int16(boardWeights[i*2+1])
 			}
 		}
 		// fmt.Println(dots1, team1, dots2, team2, score)
 	}
-	return score
+	if negScore == 0 { // you have won
+		return 32767 // max int16
+	} else if posScore == 0 { // you have lost
+		return -32768 // min int16
+	}
+	return posScore + negScore
 }
 
 func ScoreBoard(board *[]byte, team byte) int8 {
@@ -225,20 +231,19 @@ func CountTilesOfTeam(board *[]byte, team byte) (posScore int8, negScore int8) {
 		dots1, team1 := ExtractTileInfo(tile1)
 		if dots1 > 0 {
 			if team1 == team {
-				posScore ++
+				posScore++
 			} else {
-				negScore --
+				negScore--
 			}
 		}
-	
 
 		dots2, team2 := ExtractTileInfo(tile2)
 
 		if dots2 > 0 {
 			if team2 == team {
-				posScore ++
+				posScore++
 			} else {
-				negScore --
+				negScore--
 			}
 		}
 		// fmt.Println(dots1, team1, dots2, team2, score)

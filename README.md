@@ -2,6 +2,10 @@
 
 A recreation of the game Color Wars in the terminal, using Go.
 
+## How to Play
+
+Fill the entire board with your color. Click on one of your tiles to increment its score. When a tile reaches four points it splits into four one-point tiles, engulfing neighbouring tiles. One your first move place a tile of 3 points anywhere on the board.
+
 ## Dev Setup
 
 `go run .`
@@ -9,7 +13,7 @@ A recreation of the game Color Wars in the terminal, using Go.
 `go build -o color_wars.exe`
 
 
-## Notes
+## Basics of Minimax
 
 A has two options A1, A2
 Next go, B has 4 options B11, B12, B21, B22
@@ -27,22 +31,27 @@ Assuming B plays optimally, A should pick A2 because B can only get a maximum of
 
 ### Optimisation
 
-1. Search tiles by potential for best scoring (middle, out)
-2. Weight tile score by tile position (middle, out)
+1. X Search tiles by potential for best scoring (middle, out)
+2. X Weight tile score by tile position (middle, out)
+3. Try and get a player out quickly (weight by rounds to win)
+2. Randomise equal scoring moves
 
 ## User Interface
 
-1. Minimal Web Version
-2. Settings
-3. Scoreboard
+1. X Minimal Web Version
+2. X Settings
+3. X Scoreboard
+4. Rewind
+5. Replay
+6. Show Blunders (Game Analysis)
 
 ### Features
 
 1. Change board size
-2. Change depth
-3. Change which player is bot
-4. Choose between two players and bot
-5. Choose between two bots
+2. X Change depth
+3. X Change which player is bot
+4. X Choose between two players and bot
+5. X Choose between two bots
 6. Change number of points for tile split
 7. Walls
 8. Empty tiles which provide additional points

@@ -60,7 +60,6 @@ body {
 .tile.team2 {
   background-color: hsl(105, 100%, 80%);
   color: hsl(105, 100%, 50%);
-  /* box-shadow: 0 2px 5px hsla(135, 100%, 50%, 0.5); */
 }
 .tile.lastMove {
   color: var(--dark-gray);
@@ -68,10 +67,6 @@ body {
 
 .tile.lastMove.team2 {
   background-color: hsl(105, 100%, 50%) !important;
-  /* color: var(--dark-gray); */
-  /* border: 1px solid hsl(105, 100%, 50%); */
-  /* color: hsl(135, 100%, 95%); */
-  /* box-shadow: 0 2px 5px hsla(135, 100%, 50%, 0.5); */
 }
 
 .tile.lastMove.team1 {
@@ -91,6 +86,7 @@ body {
   align-items: center;
   margin: 8px 0;
 }
+
 .record {
   display: flex;
   justify-content: space-between;
@@ -171,7 +167,6 @@ body {
 }
 
 .button:active {
-  box-shadow: white 0 3px 7px inset;
   transform: translateY(2px);
 }
 
@@ -183,19 +178,10 @@ body {
   margin: 8px 0px;
 }
 
-/* id based styles */
-
-#colorWarsTitle {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-bottom: 16px;
-  flex-direction: row;
-}
-
 .boardStatus {
   font-size: 20px;
   width: 340px;
+  height: 48px;
   box-sizing: border-box;
   display: flex;
   flex-direction: row;
@@ -209,6 +195,23 @@ body {
 
   box-shadow: rgba(45, 35, 66, 0.4) 0 4px 8px,
     rgba(45, 35, 66, 0.3) 0 7px 13px -3px, hsl(30, 3%, 24%) 0 -3px 0 inset;
+}
+
+p {
+  font-size: 12px;
+}
+
+/* id based styles */
+
+#colorWarsTitle {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: row;
+}
+
+#botStatus {
+  font-size: 16px;
 }
 
 #settings {
