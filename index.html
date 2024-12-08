@@ -286,7 +286,7 @@
       ) {
         return;
       }
-      const teamToPlay = `team${((gameIteration - 1) % 2) + 1}`;
+      const teamToPlay = `team${(gameIteration % 2) + 1}`;
       const round = gameIteration;
 
       // create high score for each computer depth and team
@@ -302,17 +302,23 @@
       let [bestRound, hasWon] = scoreboard[teamToPlay][
         botDepthElement.textContent
       ] || [0, false];
-      const didWin = teamToPlay == winningTeam;
 
-      console.log(
-        "round, bestRound, didWin, hasWon, winningTeam, teamToPlay, winningTeam",
-        round,
-        bestRound,
-        didWin,
-        hasWon,
-        teamToPlay,
-        winningTeam
-      );
+      let userTeam =
+        team1UserElement.textContent === "User" ? "team1" : "team2";
+
+      const didWin = teamToPlay == userTeam;
+
+      // console.log(
+      //   "round, bestRound, didWin, hasWon, winningTeam, teamToPlay, winningTeam",
+      //   round,
+      //   bestRound,
+      //   didWin,
+      //   hasWon,
+      //   teamToPlay,
+      //   winningTeam,
+      //   didWin && (round < bestRound || bestRound == 0),
+      //   !didWin && !hasWon && round > bestRound
+      // );
       if (
         (didWin && (round < bestRound || bestRound == 0)) ||
         (!didWin && !hasWon && round > bestRound)
@@ -356,7 +362,7 @@
         const [bestRound, hasWon] = scoreboard["team1"][depth];
         const div = document.createElement("div");
         div.className = "record";
-        div.innerHTML = `<div>User Vs Computer [depth=${depth}]</div><div>${
+        div.innerHTML = `<div>User Vs Bot [depth=${depth}]</div><div>${
           hasWon ? "won" : "lost"
         }</div><div>${bestRound}</div>`;
         scoreboardElement.appendChild(div);
@@ -366,7 +372,7 @@
         const [bestRound, hasWon] = scoreboard["team2"][depth];
         const div = document.createElement("div");
         div.className = "record";
-        div.innerHTML = `<div>Computer [depth=${depth}] Vs User</div></div><div>${
+        div.innerHTML = `<div>Bot [depth=${depth}] Vs User</div></div><div>${
           hasWon ? "won" : "lost"
         }</div><div>${bestRound}</div>`;
         scoreboardElement.appendChild(div);
@@ -374,8 +380,7 @@
     };
 
     const updateGameIteration = (firstLoad = false) => {
-      gameIteration++;
-      if (gameIteration == 0) {
+      if (gameIteration == -1) {
         botStatusElement.textContent = "";
       }
       const [score1, score2] = scoreBoard();
@@ -390,6 +395,10 @@
           hasGameEnded = true;
         }
       }
+      if (hasGameEnded) {
+        return;
+      }
+      gameIteration++;
       iterationElement.textContent = `Round ${gameIteration} Score ${score1}/${score2}`;
       updateTeamBackground();
       if (gameIteration == 0 && !firstLoad) {
@@ -398,6 +407,7 @@
         });
       }
     };
+
     const getTeamToPlay = () => {
       const teamToPlay = `team${(gameIteration % 2) + 1}`;
       return teamToPlay;
@@ -470,6 +480,9 @@
           const ii = x + y * 5;
           await makeMove(tiles[ii]);
 
+          if (hasGameEnded) {
+            return;
+          }
           botStatusElement.textContent = `Bot ${teamNumToPlay} took ${(
             elapsedTime / 1000
           ).toFixed(1)}s`;

@@ -125,9 +125,9 @@ func minimax3(depth, maxDepth byte, alpha, beta int16,
 		score := ScoreBoardWeighted(board, team)
 		// fmt.Println("hit max depth", depth, team, score)
 		// fmt.Print(score, " ")
-		fmt.Println(depth, score)
+		// fmt.Println(depth, score)
 		// PrintAssignableByteArray(board)
-		RenderBoard(board)
+		// RenderBoard(board)
 		return score
 	}
 
