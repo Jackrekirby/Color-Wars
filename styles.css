@@ -279,3 +279,6 @@ p {
   margin: 0;
   overflow: hidden;
 }
+#scoreboard {
+  margin-bottom: 32px;
+}

@@ -131,7 +131,7 @@ const renderScoreRecords = () => {
         const [bestRound, hasWon] = scoreboard['team1'][depth]
         const div = document.createElement('div')
         div.className = 'record'
-        div.innerHTML = `<div>User Vs Bot [depth=${depth}]</div><div>${hasWon ? 'won' : 'lost'
+        div.innerHTML = `<div>User Vs Bot [${depth}]</div><div>${hasWon ? 'won' : 'lost'
             }</div><div>${bestRound}</div>`
         scoreboardElement.appendChild(div)
     }
@@ -140,7 +140,7 @@ const renderScoreRecords = () => {
         const [bestRound, hasWon] = scoreboard['team2'][depth]
         const div = document.createElement('div')
         div.className = 'record'
-        div.innerHTML = `<div>Bot [depth=${depth}] Vs User</div></div><div>${hasWon ? 'won' : 'lost'
+        div.innerHTML = `<div>Bot [${depth}] Vs User</div></div><div>${hasWon ? 'won' : 'lost'
             }</div><div>${bestRound}</div>`
         scoreboardElement.appendChild(div)
     }
