@@ -23,7 +23,7 @@ func (g *Game) Render(selectedTile Position) {
 		}
 		board += "\n"
 	}
-	ClearTerminal()
+	// ClearTerminal()
 	fmt.Println(board)
 }
 

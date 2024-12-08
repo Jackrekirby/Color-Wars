@@ -93,6 +93,7 @@ func ProcessUserInput(game *Game, position *Position, userInput UserInput) {
 		didUpdateTile := game.SetTileUser(position.x, position.y)
 		if didUpdateTile {
 			for game.UpdateBoard() {
+				ClearTerminal()
 				game.Render(*position)
 				time.Sleep(SleepTimeOfMitosis * time.Millisecond)
 			}
