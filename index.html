@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>5x5 Grid Game</title>
+    <style>
+      @font-face {
+        font-family: 'CustomFont';
+        src: url('assets/CascadiaMono.ttf') format('truetype');
+        font-weight: normal;
+        font-style: normal;
+      }
+
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        height: 100vh;
+        margin: 0;
+        background-color: #f0f0f0;
+        font-family: CustomFont, sans-serif;
+        overflow: hidden;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(5, 60px);
+        grid-template-rows: repeat(5, 60px);
+        gap: 10px;
+      }
+      .tile {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 60px;
+        height: 60px;
+        background-color: rgba(255, 255, 255, 0.5);
+        border: 1px solid #cccccc;
+        font-size: 20px;
+        font-weight: bold;
+        color: #333333;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+      }
+
+      .team1 {
+        background-color: hsl(0, 100%, 95%);
+        border: 1px solid hsl(0, 100%, 50%);
+        color: hsl(0, 100%, 50%);
+        box-shadow: 0 2px 5px hsla(0, 100%, 50%, 0.5);
+      }
+
+      .team2 {
+        background-color: hsl(135, 100%, 95%);
+        border: 1px solid hsl(135, 100%, 50%);
+        color: hsl(135, 100%, 50%);
+        box-shadow: 0 2px 5px hsla(135, 100%, 50%, 0.5);
+      }
+
+      .lastMove.team2 {
+        background-color: hsl(135, 100%, 50%);
+        border: 1px solid hsl(135, 100%, 50%);
+        color: hsl(135, 100%, 95%);
+        box-shadow: 0 2px 5px hsla(135, 100%, 50%, 0.5);
+      }
+
+      .lastMove.team1 {
+        background-color: hsl(0, 100%, 50%);
+        border: 1px solid hsl(0, 100%, 50%);
+        color: hsl(0, 100%, 95%);
+        box-shadow: 0 2px 5px hsla(0, 100%, 50%, 0.5);
+      }
+
+      #gameIteration {
+        margin-bottom: 16px;
+        font-size: 20px;
+      }
+      #botStatus {
+        margin-top: 16px;
+        font-size: 20px;
+      }
+      #title {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 20vw;
+        z-index: -1;
+        transform: translate(-50%, -50%);
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="title">COLOR WARS</div>
+    <div id="gameIteration"></div>
+    <div class="grid" id="grid">
+      <!-- Tiles will be generated here -->
+    </div>
+    <div id="botStatus">Make first 2 moves. Bot will then make next move.</div>
+  </body>
+
+  <script src="wasm_exec.js"></script>
+  <script>
+    const incrementTile = (x, y, team) => {
+      if (x < 0 || x >= 5 || y < 0 || y >= 5) {
+        return
+      }
+      tile = tiles[x + y * 5]
+      let dots = Number(tile.textContent)
+
+      dots = Math.min(dots + 1, 4)
+
+      tile.textContent = dots
+
+      tile.classList.remove('team1')
+      tile.classList.remove('team2')
+      tile.classList.add(team)
+    }
+
+    const sleep = ms => {
+      return new Promise(resolve => setTimeout(resolve, ms))
+    }
+
+    const updateBoard = () => {
+      let updateCount = 0
+      for (let i = 0; i < 25; i++) {
+        const tile = tiles[i]
+        const dots = Number(tile.textContent)
+        let team = null
+        if (dots >= 4) {
+          updateCount++
+          if (tile.classList.contains('team1')) {
+            team = 'team1'
+          } else {
+            team = 'team2'
+          }
+
+          tile.textContent = ''
+          tile.classList.remove(team)
+
+          const x = i % 5
+          const y = Math.floor(i / 5)
+          incrementTile(x + 1, y, team)
+          incrementTile(x - 1, y, team)
+          incrementTile(x, y + 1, team)
+          incrementTile(x, y - 1, team)
+        }
+      }
+      return updateCount > 0
+    }
+
+    const updateGameIteration = () => {
+      gameIteration++
+      iterationElement.textContent = `Round ${gameIteration}`
+      updateTeamBackground()
+    }
+    const getTeamToPlay = () => {
+      const teamToPlay = `team${(gameIteration % 2) + 1}`
+      return teamToPlay
+    }
+    const updateTeamBackground = () => {
+      const teamToPlay = getTeamToPlay()
+      if (teamToPlay == 'team1') {
+        document.body.style.backgroundColor = 'hsla(0, 100%, 50%, 0.1)'
+      } else {
+        document.body.style.backgroundColor = 'hsla(135, 100%, 50%, 0.1)'
+      }
+    }
+
+    const generateBoard = () => {
+      // Generate the grid with random numbers
+      for (let i = 0; i < 25; i++) {
+        const tile = document.createElement('div')
+        tile.className = 'tile'
+        const dots = 0
+        tile.textContent = dots == 0 ? '' : dots
+        // tile.textContent = i
+        if (dots > 0) {
+          const team = `team${Math.round(Math.random()) + 1}`
+          tile.classList.add(team)
+        }
+
+        tile.onclick = async () => {
+          if (animating) {
+            return
+          }
+          animating = true
+
+          let teamOfTile = null
+          if (tile.classList.contains('team1')) {
+            teamOfTile = 'team1'
+          } else if (tile.classList.contains('team2')) {
+            teamOfTile = 'team2'
+          }
+
+          const teamToPlay = getTeamToPlay()
+          let didPlayerMove = false
+
+          if (teamOfTile !== null && teamToPlay === teamOfTile) {
+            let dots = Number(tile.textContent)
+            dots = Math.min(dots + 1, 4)
+            tile.textContent = dots
+
+            for (let tile1 of tiles) {
+              tile1.classList.remove('lastMove')
+            }
+            tile.classList.add('lastMove')
+
+            await sleep(250)
+            while (updateBoard()) {
+              await sleep(250)
+            }
+            updateGameIteration()
+            didPlayerMove = true
+          } else if (gameIteration < 2) {
+            tile.textContent = 3
+            tile.classList.add(`team${gameIteration + 1}`)
+            for (let tile1 of tiles) {
+              tile1.classList.remove('lastMove')
+            }
+            tile.classList.add('lastMove')
+            updateGameIteration()
+            didPlayerMove = true
+          }
+
+          animating = false
+
+          if (didPlayerMove && teamToPlay == `team2`) {
+            botStatusElement.textContent = 'bot thinking...'
+            // team2 just played, now team 1 (bot)
+
+            const startTime = performance.now()
+            const board = []
+            for (let i = 0; i < 25; i++) {
+              const tile = tiles[i]
+              let teamOfTile = 0
+              if (tile.classList.contains('team1')) {
+                teamOfTile = 0
+              } else if (tile.classList.contains('team2')) {
+                teamOfTile = 1
+              }
+              const dots = Number(tile.textContent)
+              board.push(dots, teamOfTile)
+            }
+            console.log(board)
+            await sleep(1)
+            let [hasResult, x, y] = callRunProgram(board)
+
+            const endTime = performance.now()
+            const elapsedTime = endTime - startTime
+            console.log(elapsedTime)
+            if (elapsedTime < 250) {
+              console.log('sleep', 250 - elapsedTime)
+              await sleep(250 - elapsedTime)
+            }
+
+            console.log(hasResult, x, y)
+            if (hasResult) {
+              const ii = x + y * 5
+              tiles[ii].click()
+            }
+
+            botStatusElement.textContent = `your move (${(
+              elapsedTime / 1000
+            ).toFixed(1)}s)`
+          }
+        }
+
+        gridElement.appendChild(tile)
+        tiles.push(tile)
+      }
+    }
+
+    let gameIteration = -1
+    let animating = true
+    console.log('color wars')
+
+    const go = new Go()
+    let wasmInitialized = false // To track if WebAssembly is ready
+    WebAssembly.instantiateStreaming(fetch('main.wasm'), go.importObject).then(
+      result => {
+        go.run(result.instance)
+        wasmInitialized = true
+        console.log('WASM initialized, you can now call runProgram.')
+      }
+    )
+
+    function callRunProgram(array) {
+      if (!wasmInitialized) {
+        console.error(
+          'WASM not initialized yet. Wait for initialization to complete.'
+        )
+        return
+      }
+
+      // Call the Go function exposed globally
+      return runProgram(array)
+    }
+
+    const gridElement = document.getElementById('grid')
+    const iterationElement = document.getElementById('gameIteration')
+    const botStatusElement = document.getElementById('botStatus')
+    updateGameIteration()
+    const tiles = []
+    generateBoard()
+    updateTeamBackground()
+    animating = false
+    console.log('loaded')
+
+    // const test = async () => {
+    //   await sleep(250)
+    //   callRunProgram([1, 2, 3, 4])
+    // }
+    // test()
+  </script>
+</html>
