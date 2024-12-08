@@ -78,6 +78,7 @@
       #botStatus {
         margin-top: 16px;
         font-size: 20px;
+        text-align: center;
       }
       #title {
         position: absolute;
@@ -97,7 +98,9 @@
     <div class="grid" id="grid">
       <!-- Tiles will be generated here -->
     </div>
-    <div id="botStatus">Make first 2 moves. Bot will then make next move.</div>
+    <div id="botStatus">
+      Make first 2 moves. <br />Bot will then make next move.
+    </div>
   </body>
 
   <script src="wasm_exec.js"></script>
@@ -227,7 +230,7 @@
           animating = false
 
           if (didPlayerMove && teamToPlay == `team2`) {
-            botStatusElement.textContent = 'bot thinking...'
+            botStatusElement.textContent = 'Bot thinking...'
             // team2 just played, now team 1 (bot)
 
             const startTime = performance.now()
@@ -244,7 +247,7 @@
               board.push(dots, teamOfTile)
             }
             console.log(board)
-            await sleep(1)
+            await sleep(10)
             let [hasResult, x, y] = callRunProgram(board)
 
             const endTime = performance.now()
@@ -261,7 +264,7 @@
               tiles[ii].click()
             }
 
-            botStatusElement.textContent = `your move (${(
+            botStatusElement.textContent = `Your move (bot took ${(
               elapsedTime / 1000
             ).toFixed(1)}s)`
           }
