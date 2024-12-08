@@ -121,6 +121,26 @@
         flex-direction: column;
         width: 100%;
         max-width: 512px;
+        max-height: calc(100% - 32px);
+        overflow-y: auto;
+      }
+
+      /* Custom scrollbar styles */
+      #settingsPanelInternal::-webkit-scrollbar {
+        width: 12px;
+      }
+
+      #settingsPanelInternal::-webkit-scrollbar-track {
+        background: #f1f1f1;
+      }
+
+      #settingsPanelInternal::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 6px;
+      }
+
+      #settingsPanelInternal::-webkit-scrollbar-thumb:hover {
+        background: #555;
       }
 
       .hide {
@@ -142,6 +162,19 @@
         align-items: center;
         margin: 8px 0;
       }
+      .record {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin: 8px 0;
+        flex-direction: row;
+      }
+      .record div {
+        width: 64px;
+      }
+      .record div:first-child {
+        flex-grow: 1;
+      }
       #colorWarsTitle {
         display: flex;
         justify-content: center;
@@ -149,7 +182,8 @@
         margin-bottom: 16px;
         flex-direction: row;
       }
-      #newGame {
+      #newGame,
+      #resetStorage {
         margin: 8px 0;
         padding: 4px 0;
       }
@@ -163,6 +197,7 @@
           <h1 style="color: hsl(0, 100%, 50%)">Color</h1>
           <h1 style="color: hsl(135, 100%, 50%)">Wars</h1>
         </div>
+        <button id="newGame">New Game</button>
         <h2>Settings</h2>
         <div class="button">
           <label style="color: hsl(0, 100%, 50%)">Team 1</label
@@ -175,8 +210,10 @@
         <div class="button">
           <label>Bot Search Depth</label><button id="botDepth">8</button>
         </div>
+        <button id="resetStorage">Reset Storage</button>
 
-        <button id="newGame">New Game</button>
+        <h2>Scoreboard</h2>
+        <div id="scoreboard"></div>
       </div>
     </div>
     <div id="gameScreen" class="hide">
@@ -238,12 +275,122 @@
       return updateCount > 0;
     };
 
+    const updateScoreRecords = (winningTeam) => {
+      // only score user vs computer
+      if (
+        (team1UserElement.textContent === "User" &&
+          team2UserElement.textContent === "User") ||
+        (team1UserElement.textContent === "Computer" &&
+          team2UserElement.textContent === "Computer")
+      ) {
+        return;
+      }
+      const teamToPlay = `team${((gameIteration - 1) % 2) + 1}`;
+      const round = gameIteration;
+
+      // create high score for each computer depth and team
+      // {userteam: {depth: [round, didWin]}}
+      const scoreboard = JSON.parse(localStorage.getItem("scoreboard")) || {
+        team1: {},
+        team2: {},
+      };
+      if (!scoreboard[teamToPlay]) {
+        scoreboard[teamToPlay] = {};
+      }
+
+      let [bestRound, hasWon] = scoreboard[teamToPlay][
+        botDepthElement.textContent
+      ] || [0, false];
+      const didWin = teamToPlay == winningTeam;
+
+      console.log(
+        "round, bestRound, didWin, hasWon, winningTeam, teamToPlay, winningTeam",
+        round,
+        bestRound,
+        didWin,
+        hasWon,
+        teamToPlay,
+        winningTeam
+      );
+      if (
+        (didWin && (round < bestRound || bestRound == 0)) ||
+        (!didWin && !hasWon && round > bestRound)
+      ) {
+        let team = "";
+        if (didWin) {
+          botStatusElement.textContent = "User Wins (New Lowest Round)";
+        } else {
+          botStatusElement.textContent = "User Lost (New Highest Round)";
+        }
+
+        scoreboard[getTeamToPlay()][botDepthElement.textContent] = [
+          round,
+          didWin,
+        ];
+        localStorage.setItem("scoreboard", JSON.stringify(scoreboard));
+        renderScoreRecords();
+      }
+    };
+
+    const renderScoreRecords = () => {
+      const scoreboard = JSON.parse(localStorage.getItem("scoreboard")) || {
+        team1: {},
+        team2: {},
+      };
+
+      const scoreboardElement = document.getElementById("scoreboard");
+      scoreboardElement.innerHTML = "";
+
+      if (
+        Object.keys(scoreboard["team1"]).length === 0 &&
+        Object.keys(scoreboard["team2"]).length === 0
+      ) {
+        scoreboardElement.innerHTML = "No records";
+        return;
+      }
+
+      const div = document.createElement("div");
+      div.className = "record";
+      div.innerHTML = `<div>Players</div><div>State</div><div>Round</div>`;
+      scoreboardElement.appendChild(div);
+
+      for (let depth in scoreboard["team1"]) {
+        const [bestRound, hasWon] = scoreboard["team1"][depth];
+        const div = document.createElement("div");
+        div.className = "record";
+        div.innerHTML = `<div>User Vs Computer [depth=${depth}]</div><div>${
+          hasWon ? "won" : "lost"
+        }</div><div>${bestRound}</div>`;
+        scoreboardElement.appendChild(div);
+      }
+
+      for (let depth in scoreboard["team2"]) {
+        const score = scoreboard["team2"][depth];
+        const div = document.createElement("div");
+        div.className = "button";
+        div.innerHTML = `<div>Computer [depth=${depth}] Vs User</div><div>${score}</div>`;
+        scoreboardElement.appendChild(div);
+      }
+    };
+
     const updateGameIteration = () => {
       gameIteration++;
       if (gameIteration == 2) {
         botStatusElement.textContent = "";
       }
-      iterationElement.textContent = `Round ${gameIteration}`;
+      const [score1, score2] = scoreBoard();
+      if (gameIteration >= 2) {
+        if (score2 == 0) {
+          botStatusElement.textContent = "Team 1 wins!";
+          updateScoreRecords("team1");
+          hasGameEnded = true;
+        } else if (score1 == 0) {
+          botStatusElement.textContent = "Team 2 wins!";
+          updateScoreRecords("team2");
+          hasGameEnded = true;
+        }
+      }
+      iterationElement.textContent = `Round ${gameIteration} Score ${score1}/${score2}`;
       updateTeamBackground();
     };
     const getTeamToPlay = () => {
@@ -264,7 +411,7 @@
     };
 
     const makeComputerMove = async () => {
-      if (animating) {
+      if (animating || hasGameEnded) {
         return;
       }
       // console.log("makeComputerMove");
@@ -372,7 +519,7 @@
     };
 
     const makeUserMove = async (tile) => {
-      if (animating) {
+      if (animating || hasGameEnded) {
         return;
       }
       // console.log("makeUserMove");
@@ -407,19 +554,23 @@
       }
     };
 
-    let gameIteration = -1;
-    let animating = true;
-    console.log("color wars");
-
-    const go = new Go();
-    let wasmInitialized = false; // To track if WebAssembly is ready
-    WebAssembly.instantiateStreaming(fetch("main.wasm"), go.importObject).then(
-      (result) => {
-        go.run(result.instance);
-        wasmInitialized = true;
-        console.log("WASM initialized, you can now call runProgram.");
+    const scoreBoard = () => {
+      if (gameIteration < 1) {
+        return [0, 0];
       }
-    );
+      let team1Score = 0;
+      let team2Score = 0;
+      for (let i = 0; i < 25; i++) {
+        const tile = tiles[i];
+        const dots = Number(tile.textContent);
+        if (tile.classList.contains("team1")) {
+          team1Score += dots;
+        } else if (tile.classList.contains("team2")) {
+          team2Score += dots;
+        }
+      }
+      return [team1Score, team2Score];
+    };
 
     function callRunProgram(array, team, depth) {
       if (!wasmInitialized) {
@@ -486,6 +637,7 @@
 
       newGameElement.onclick = () => {
         gameIteration = -1;
+        hasGameEnded = false;
         updateGameIteration();
         for (let tile of tiles) {
           tile.textContent = "";
@@ -499,7 +651,35 @@
         gameScreenElement.classList.toggle("hide");
         botStatusElement.innerHTML = "Make first move for bot";
       };
+
+      resetStorageElement.onclick = () => {
+        localStorage.clear();
+        renderScoreRecords();
+        initialiseSettings();
+      };
     };
+
+    const resetStorageOnVersionChange = () => {
+      if (localStorage.getItem("version") !== VERSION) {
+        console.log("Version changed, resetting storage");
+        localStorage.clear();
+        localStorage.setItem("version", VERSION);
+      }
+    };
+
+    const initialiseGo = () => {
+      const go = new Go();
+      WebAssembly.instantiateStreaming(
+        fetch("main.wasm"),
+        go.importObject
+      ).then((result) => {
+        go.run(result.instance);
+        wasmInitialized = true;
+        console.log("WASM initialized, you can now call runProgram.");
+      });
+    };
+
+    console.log("color wars");
 
     const gridElement = document.getElementById("grid");
     const iterationElement = document.getElementById("gameIteration");
@@ -511,19 +691,24 @@
     const team2UserElement = document.getElementById("team2User");
     const botDepthElement = document.getElementById("botDepth");
     const newGameElement = document.getElementById("newGame");
+    const resetStorageElement = document.getElementById("resetStorage");
 
+    let gameIteration = -1;
+    let animating = true;
+    let wasmInitialized = false;
+    let hasGameEnded = false;
+    const VERSION = "1"; // if version changes, reset storage
+    const tiles = [];
+
+    resetStorageOnVersionChange();
+
+    initialiseGo();
     initialiseSettings();
     updateGameIteration();
-    const tiles = [];
     generateBoard();
     updateTeamBackground();
+    renderScoreRecords();
     animating = false;
     console.log("loaded");
-
-    // const test = async () => {
-    //   await sleep(250)
-    //   callRunProgram([1, 2, 3, 4])
-    // }
-    // test()
   </script>
 </html>
