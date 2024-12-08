@@ -85,7 +85,7 @@ func MiniMaxWrapper(maxDepth byte,
 	alphaIndex = 0
 	alphaBoard = nil
 	nodesSearched = 0
-	minimax3(0, maxDepth, -128, 127, board, team)
+	minimax3(0, maxDepth, -32768, 32767, board, team)
 	if alphaBoard != nil {
 		r = true
 		x, y = alphaIndex%5, alphaIndex/5
@@ -97,9 +97,9 @@ func MiniMaxWrapper(maxDepth byte,
 	return
 }
 
-func minimax3(depth, maxDepth byte, alpha, beta int8,
+func minimax3(depth, maxDepth byte, alpha, beta int16,
 	board *[]byte, team byte,
-) int8 {
+) int16 {
 	nodesSearched += 1
 	// fmt.Println("minimax3", nodesSearched)
 	isBoardEmpty := false
@@ -113,6 +113,7 @@ func minimax3(depth, maxDepth byte, alpha, beta int8,
 	}
 	if depth <= 1 {
 		// in the first two moves, check if the board is empty
+		// should be count not points
 		posScore, _ := ScoreBoardOfTeam(board, currentTeam)
 		if posScore == 0 {
 			isBoardEmpty = true
@@ -121,12 +122,12 @@ func minimax3(depth, maxDepth byte, alpha, beta int8,
 	}
 	if depth == maxDepth {
 		
-		score := ScoreBoard(board, team)
+		score := ScoreBoardWeighted(board, team)
 		// fmt.Println("hit max depth", depth, team, score)
 		// fmt.Print(score, " ")
-		// fmt.Println(depth, score)
+		fmt.Println(depth, score)
 		// PrintAssignableByteArray(board)
-		// RenderBoard(board)
+		RenderBoard(board)
 		return score
 	}
 
