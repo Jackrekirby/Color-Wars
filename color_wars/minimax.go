@@ -93,7 +93,7 @@ func MiniMaxWrapper(maxDepth byte,
 		r = false
 		x, y = 0, 0
 	}
-	fmt.Println("minimax [nodesSearched]", nodesSearched)
+	// fmt.Println("minimax [nodesSearched]", nodesSearched)
 	return
 }
 
@@ -121,7 +121,7 @@ func minimax3(depth, maxDepth byte, alpha, beta int16,
 		}
 	}
 	if depth == maxDepth {
-		
+
 		score := ScoreBoardWeighted(board, team)
 		// fmt.Println("hit max depth", depth, team, score)
 		// fmt.Print(score, " ")
@@ -132,7 +132,6 @@ func minimax3(depth, maxDepth byte, alpha, beta int16,
 	}
 
 	dotBitMasks := [2]byte{0b00010000, 0b00000001}
-	
 
 PerTwoTilesLoop:
 	for i := 0; i < 13; i++ {
@@ -145,7 +144,7 @@ PerTwoTilesLoop:
 			if isBoardEmpty {
 				// if board is empty for user
 				// then tiles with dots belong to other team
-				dots, _  := ExtractTileInfo(tile)
+				dots, _ := ExtractTileInfo(tile)
 				if dots > 0 {
 					continue
 				}
@@ -162,13 +161,12 @@ PerTwoTilesLoop:
 			} else {
 				boardCopy[i] += dotBitMasks[j] // add a dot to the tile
 			}
-			
+
 			for UpdateBoard(&boardCopy) {
 				// keep updating until no more updates
 			}
 
 			// score1 := ScoreBoard(&boardCopy, team)
-		
 
 			score := minimax3(depth+1, maxDepth, alpha, beta, &boardCopy, team)
 
@@ -202,7 +200,7 @@ PerTwoTilesLoop:
 				break PerTwoTilesLoop
 			}
 			// Pruning
-			if (doPrune && alpha >= beta) {
+			if doPrune && alpha >= beta {
 				// fmt.Println("prune", depth, alpha, beta, score)
 				break PerTwoTilesLoop
 			}

@@ -51,8 +51,8 @@ const updateScoreRecords = winningTeam => {
     if (
         (team1UserElement.textContent === 'User' &&
             team2UserElement.textContent === 'User') ||
-        (team1UserElement.textContent === 'Computer' &&
-            team2UserElement.textContent === 'Computer')
+        (team1UserElement.textContent !== 'User' &&
+            team2UserElement.textContent !== 'User')
     ) {
         return
     }
@@ -192,26 +192,8 @@ const updateTeamBackground = () => {
     }
 }
 
-const makeComputerMove = async () => {
-    if (animating || hasGameEnded) {
-        return
-    }
-    // console.log("makeComputerMove");
+const makeComputerMove_GoBot = (dryRun = false) => {
 
-    const teamToPlay = getTeamToPlay()
-    const teamNumToPlay = getTeamNumToPlay()
-    // console.log(teamToPlay, teamNumToPlay, gameIteration);
-    if (
-        (teamToPlay == 'team1' && team1UserElement.textContent === 'User') ||
-        (teamToPlay == 'team2' && team2UserElement.textContent === 'User')
-    ) {
-        return
-    }
-    animating = true
-
-    botStatusElement.textContent = `Bot ${teamNumToPlay} thinking...`
-
-    const startTime = performance.now()
     const board = []
     for (let i = 0; i < 25; i++) {
         const tile = tiles[i]
@@ -226,8 +208,11 @@ const makeComputerMove = async () => {
     }
     // console.log(board);
 
+    const teamNumToPlay = getTeamNumToPlay()
+
     // wait until the next frame to allow the UI to update
     requestAnimationFrame(async () => {
+        const startTime = performance.now()
         callRunProgram(
             board,
             teamNumToPlay - 1,
@@ -241,8 +226,16 @@ const makeComputerMove = async () => {
                     // console.log("sleep", 250 - elapsedTime);
                     await sleep(250 - elapsedTime)
                 }
+                if (hasResult) {
+                    console.log('[go.]', { x, y, t: elapsedTime.toFixed(0) })
+                } else {
+                    console.log('[go.]', { failed: 'failed', t: elapsedTime.toFixed(0) })
+                }
 
-                console.log('hasResult, x, y', hasResult, x, y)
+                if (dryRun) {
+                    return
+                }
+                // console.log('hasResult, x, y', hasResult, x, y)
                 if (hasResult) {
                     const ii = x + y * 5
                     await makeMove(tiles[ii])
@@ -263,6 +256,105 @@ const makeComputerMove = async () => {
             }
         )
     })
+}
+
+
+const makeComputerMove_CppBot = () => {
+    const board = []
+    for (let i = 0; i < 25; i++) {
+        const tile = tiles[i]
+        let teamOfTile = 0
+        if (tile.classList.contains('team1')) {
+            teamOfTile = 0
+        } else if (tile.classList.contains('team2')) {
+            teamOfTile = 1
+        }
+        const dots = Number(tile.textContent)
+        board.push(teamOfTile, dots)
+    }
+    // RenderCppBoard(board)
+    // console.log(board);
+
+    const teamNumToPlay = getTeamNumToPlay()
+
+    // wait until the next frame to allow the UI to update
+    requestAnimationFrame(async () => {
+        const startTime = performance.now()
+        const team = teamNumToPlay - 1;
+        const depth = Number(botDepthElement.textContent);
+
+        const result = MiniMax(team, depth, board);
+
+        const endTime = performance.now()
+        const elapsedTime = endTime - startTime
+        // console.log(elapsedTime);
+        if (elapsedTime < 250) {
+            // console.log("sleep", 250 - elapsedTime);
+            await sleep(250 - elapsedTime)
+        }
+
+
+        if (result) {
+            const [x, y] = result
+            console.log('[c++]', { x, y, t: elapsedTime.toFixed(0) })
+            const ii = x + y * 5
+            await makeMove(tiles[ii])
+
+            if (hasGameEnded) {
+                return
+            }
+            botStatusElement.textContent = `C++ Bot ${teamNumToPlay} took ${(
+                elapsedTime / 1000
+            ).toFixed(1)}s`
+        }
+
+        animating = false
+
+        if (result) {
+            makeComputerMove()
+        }
+
+    })
+}
+
+const makeComputerMove = async () => {
+    if (animating || hasGameEnded) {
+        return
+    }
+    // console.log("makeComputerMove");
+
+    const teamToPlay = getTeamToPlay()
+    const teamNumToPlay = getTeamNumToPlay()
+    // console.log(teamToPlay, teamNumToPlay, gameIteration);
+    if (
+        (teamToPlay == 'team1' && team1UserElement.textContent === 'User') ||
+        (teamToPlay == 'team2' && team2UserElement.textContent === 'User')
+    ) {
+        return
+    }
+    animating = true
+
+    const startTime = performance.now()
+    const startStr = `Bot ${teamNumToPlay} thinking...`
+    const animationFrame = () => {
+
+        if (botStatusElement.textContent.startsWith(startStr)) {
+            botStatusElement.textContent = `${startStr} (${((performance.now() - startTime) / 1000).toFixed(2)}s)`
+            requestAnimationFrame(animationFrame)
+        }
+    }
+    botStatusElement.textContent = startStr
+    requestAnimationFrame(animationFrame)
+
+    const bot = [team1UserElement.textContent, team2UserElement.textContent][gameIteration % 2]
+    // console.log('bot', teamToPlay, bot)
+    if (bot == 'Go Bot') {
+        makeComputerMove_GoBot()
+    } else {
+        // makeComputerMove_GoBot(true)
+        makeComputerMove_CppBot()
+    }
+
 }
 
 const makeMove = async tile => {
@@ -404,25 +496,34 @@ const initialiseSettings = () => {
         gameScreenElement.classList.toggle('hide')
     }
 
+    const teamPlayers = ['User', 'Go Bot', 'C++ Bot']
+
     team1UserElement.onclick = () => {
         team1UserElement.textContent =
-            team1UserElement.textContent === 'User' ? 'Computer' : 'User'
-
+            teamPlayers[(teamPlayers.findIndex(item => item === team1UserElement.textContent) + 1) % teamPlayers.length]
         localStorage.setItem('team1User', team1UserElement.textContent)
     }
 
     team2UserElement.onclick = () => {
         team2UserElement.textContent =
-            team2UserElement.textContent === 'User' ? 'Computer' : 'User'
-
+            teamPlayers[(teamPlayers.findIndex(item => item === team2UserElement.textContent) + 1) % teamPlayers.length]
         localStorage.setItem('team2User', team2UserElement.textContent)
     }
 
     botDepthElement.onclick = () => {
         let depth = Number(botDepthElement.textContent)
-        depth = (depth + 1) % 20
+        depth = (depth + 1) % 17
         if (depth === 0) {
             depth = 1
+        }
+        botDepthElement.textContent = depth
+        localStorage.setItem('botDepth', depth)
+    }
+    botDepthMinusElement.onclick = () => {
+        let depth = Number(botDepthElement.textContent)
+        depth = (depth - 1) % 17
+        if (depth === 0) {
+            depth = 16
         }
         botDepthElement.textContent = depth
         localStorage.setItem('botDepth', depth)
@@ -470,9 +571,87 @@ const initialiseGo = () => {
     ).then(result => {
         go.run(result.instance)
         wasmInitialized = true
-        console.log('WASM initialized, you can now call runProgram.')
+        console.log('Go WASM initialized')
     })
 }
+
+// CPP
+
+// minimax-wrapper.js
+
+let isWebAssemblyModuleInitialised = false;
+
+const initialiseMiniMaxWebAssemblyModule = (callback) => {
+    if (typeof Module === 'undefined') {
+        console.error('Module is not defined. Ensure the WASM environment is properly set up.');
+        return;
+    }
+    Module.onRuntimeInitialized = callback
+}
+
+const MiniMax = (team, depth, board) => {
+    // Create a pointer to a 'Board' structure in WASM memory
+    const boardSize = 25 * 8; // 25 tiles, each 8 bytes (2 integers)
+    const boardPtr = Module._malloc(boardSize);
+
+    for (let i = 0; i < 50; i += 2) {
+        const team = board[i]
+        const dots = board[i + 1]
+
+        Module.setValue(boardPtr + (i * 4), team, 'i32');
+        Module.setValue(boardPtr + ((i + 1) * 4), dots, 'i32');
+    }
+
+    // Wrap the `InitialiseMiniMax` function
+    const InitialiseMiniMax = Module.cwrap('InitialiseMiniMax', 'number', [
+        'number',
+        'number',
+        'number',
+        'number',
+    ]);
+
+    // Call the function
+    const result = InitialiseMiniMax(boardPtr, depth, gameIteration, team);
+
+    // Free the allocated memory
+    Module._free(boardPtr);
+
+    if (result === 25) {
+        console.error("Computer did not pick a move")
+        return null
+    } else {
+        const x = result % 5;
+        const y = Math.floor(result / 5);
+        // console.log('Computer picked', x, y);
+        return [x, y]
+    }
+}
+
+const RenderCppBoard = (board) => {
+    const red = '\x1b[31m';
+    const green = '\x1b[32m';
+    const reset = '\x1b[0m';  // Resets the color back to default
+
+    let boardStr = ""
+    for (let y = 0; y < 5; y++) {
+        for (let x = 0; x < 5; x++) {
+            const i = (x + y * 5) * 2;
+            const team = board[i];
+            const dots = board[i + 1];
+            if (dots === 0) {
+                boardStr += "# "
+            } else if (team === 0) {
+                boardStr += red + dots + reset + " "
+            } else {
+                boardStr += green + dots + reset + " "
+            }
+
+        }
+        boardStr += '\n'
+    }
+    console.log(boardStr);
+}
+
 
 // MAIN
 
@@ -487,6 +666,7 @@ const gameScreenElement = document.getElementById('gameScreen')
 const team1UserElement = document.getElementById('team1User')
 const team2UserElement = document.getElementById('team2User')
 const botDepthElement = document.getElementById('botDepth')
+const botDepthMinusElement = document.getElementById('botDepthMinus')
 const newGameElement = document.getElementById('newGame')
 const resetStorageElement = document.getElementById('resetStorage')
 
@@ -498,6 +678,11 @@ const VERSION = '1' // if version changes, reset storage
 const tiles = []
 
 resetStorageOnVersionChange()
+
+initialiseMiniMaxWebAssemblyModule(() => {
+    console.log('C++ WASM Initialised')
+    isWebAssemblyModuleInitialised = true;
+})
 
 initialiseGo()
 initialiseSettings()

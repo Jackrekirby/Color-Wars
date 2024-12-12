@@ -26,7 +26,7 @@
           <label style="color: hsl(0, 100%, 50%); font-weight: bold"
             >Player One</label
           >
-          <div id="team1User" class="button teamUser">Computer</div>
+          <div id="team1User" class="button teamUser">User</div>
         </div>
         <div class="buttonWrapper">
           <label style="color: hsl(105, 100%, 50%); font-weight: bold"
@@ -36,7 +36,10 @@
         </div>
         <div class="buttonWrapper">
           <label>Bot Search Depth</label>
-          <div id="botDepth" class="button">8</div>
+          <div>
+            <div id="botDepthMinus" class="button">-</div>
+            <div id="botDepth" class="button">8</div>
+          </div>
         </div>
         <div id="resetStorage" class="button full">Reset Storage</div>
 
@@ -52,7 +55,7 @@
       <div id="botStatus" class="boardStatus"></div>
     </div>
   </body>
-
+  <script src="color_wars_cpp/minimax.js"></script>
   <script src="wasm_exec.js"></script>
   <script src="index.js"></script>
 </html>
