@@ -251,9 +251,9 @@ const makeComputerMove_GoBot = (dryRun = false) => {
                 const endTime = performance.now()
                 const elapsedTime = endTime - startTime
                 // console.log(elapsedTime);
-                if (elapsedTime < 250) {
+                if (elapsedTime < botMinPlayPeriod) {
                     // console.log("sleep", 250 - elapsedTime);
-                    await sleep(250 - elapsedTime)
+                    await sleep(botMinPlayPeriod - elapsedTime)
                 }
                 if (hasResult) {
                     console.log('[go.]', { x, y, t: elapsedTime.toFixed(0) })
@@ -317,9 +317,9 @@ const makeComputerMove_CppBot = () => {
         const endTime = performance.now()
         const elapsedTime = endTime - startTime
         // console.log(elapsedTime);
-        if (elapsedTime < 250) {
+        if (elapsedTime < botMinPlayPeriod) {
             // console.log("sleep", 250 - elapsedTime);
-            await sleep(250 - elapsedTime)
+            await sleep(botMinPlayPeriod - elapsedTime)
         }
 
 
@@ -407,9 +407,9 @@ const makeMove = async tile => {
         }
         tile.classList.add('lastMove')
 
-        await sleep(250)
+        await sleep(boardAnimationPeriod)
         while (updateBoard()) {
-            await sleep(250)
+            await sleep(boardAnimationPeriod)
         }
         updateGameIteration()
         didPlayerMove = true
@@ -723,6 +723,8 @@ const newGameElement = document.getElementById('newGame')
 const resetStorageElement = document.getElementById('resetStorage')
 const gameTimerElement = document.getElementById('gameTimer')
 
+const boardAnimationPeriod = 250; // milliseconds
+const botMinPlayPeriod = 250; // milliseconds
 let gameIteration = -1
 let animating = true
 let wasmInitialized = false
