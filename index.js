@@ -56,6 +56,7 @@ const updateScoreRecords = winningTeam => {
     ) {
         return
     }
+    let userTeam = team1UserElement.textContent === 'User' ? 'team1' : 'team2'
     const teamToPlay = `team${(gameIteration % 2) + 1}`
     const round = gameIteration
 
@@ -65,15 +66,15 @@ const updateScoreRecords = winningTeam => {
         team1: {},
         team2: {}
     }
-    if (!scoreboard[teamToPlay]) {
-        scoreboard[teamToPlay] = {}
+    if (!scoreboard[userTeam]) {
+        scoreboard[userTeam] = {}
     }
 
-    let [bestRound, hasWon] = scoreboard[teamToPlay][
+    let [bestRound, hasWon] = scoreboard[userTeam][
         botDepthElement.textContent
     ] || [0, false]
 
-    let userTeam = team1UserElement.textContent === 'User' ? 'team1' : 'team2'
+    // let userTeam = team1UserElement.textContent === 'User' ? 'team1' : 'team2'
 
     const didWin = teamToPlay == userTeam
 
@@ -99,7 +100,7 @@ const updateScoreRecords = winningTeam => {
             botStatusElement.textContent = 'User Lost (New Highest Round)'
         }
 
-        scoreboard[teamToPlay][botDepthElement.textContent] = [round, didWin]
+        scoreboard[userTeam][botDepthElement.textContent] = [round, didWin]
         localStorage.setItem('scoreboard', JSON.stringify(scoreboard))
         renderScoreRecords()
     }
@@ -149,6 +150,7 @@ const renderScoreRecords = () => {
 const updateGameIteration = (firstLoad = false) => {
     if (gameIteration == -1) {
         botStatusElement.textContent = ''
+        teamElapsedTimes = [0, 0]
     }
     const [score1, score2] = scoreBoard()
     if (gameIteration >= 2) {
@@ -165,7 +167,9 @@ const updateGameIteration = (firstLoad = false) => {
     if (hasGameEnded) {
         return
     }
+
     gameIteration++
+
     iterationElement.textContent = `Round ${gameIteration} Score ${score1}/${score2}`
     updateTeamBackground()
     if (gameIteration == 0 && !firstLoad) {
@@ -173,6 +177,31 @@ const updateGameIteration = (firstLoad = false) => {
             makeComputerMove()
         })
     }
+}
+
+const addLeadingZeros = (num, totalLength) => {
+    return num.toString().padStart(totalLength, '0');
+}
+
+const millisToMMSS = (millis) => {
+    totalSeconds = Math.floor(millis / 1000)
+    minutes = Math.floor(totalSeconds / 60)
+    seconds = totalSeconds % 60
+    return `${addLeadingZeros(minutes, 2)}:${addLeadingZeros(seconds, 2)}`
+}
+
+const updateTeamElapsedTime = () => {
+    if (hasGameEnded) {
+        return
+    }
+    const now = performance.now()
+    teamElapsedTimes[gameIteration % 2] += now - gameIterationStartTime
+    gameIterationStartTime = now
+    // console.log('teamElapsedTimes', teamElapsedTimes)
+
+    gameTimerElement.textContent = millisToMMSS(teamElapsedTimes[0]) + ' - ' + millisToMMSS(teamElapsedTimes[1])
+
+    requestAnimationFrame(updateTeamElapsedTime)
 }
 
 const getTeamToPlay = () => {
@@ -414,22 +443,25 @@ const makeUserMove = async tile => {
 }
 
 const generateBoard = () => {
+    // const initBoard = [
+    //     [0, 0], [1, 2], [1, 1], [0, 1], [0, 1],
+    //     [1, 1], [1, 1], [0, 0], [1, 2], [0, 2],
+    //     [1, 1], [1, 1], [1, 2], [1, 3], [1, 3],
+    //     [0, 0], [1, 2], [1, 2], [0, 0], [1, 2],
+    //     [0, 0], [0, 0], [1, 1], [1, 2], [0, 0],
+    // ]
     // Generate the grid with random numbers
     for (let i = 0; i < 25; i++) {
         const tile = document.createElement('div')
         tile.className = 'tile'
-        const dots = 0
+        const dots = 0; //initBoard[i][1]
+        const team = 0; // initBoard[i][0]
         tile.textContent = dots == 0 ? '' : dots
-        // tile.textContent = i
-        if (dots > 0) {
-            const team = `team${Math.round(Math.random()) + 1}`
-            tile.classList.add(team)
-        }
-
+        const teamCls = `team${team + 1}`
+        tile.classList.add(teamCls)
 
         const randomColor = `hsl(30, 3%, ${Math.floor(Math.random() * 6) + 23}%)`; // Random HSL color
         tile.style.backgroundColor = randomColor;
-
 
         tile.onclick = () => makeUserMove(tile)
 
@@ -472,7 +504,7 @@ function callRunProgram(array, team, depth, callback) {
 const initialiseSettings = () => {
     // set team1UserElement based on local storage
     if (localStorage.getItem('team1User') === null) {
-        localStorage.setItem('team1User', 'Computer')
+        localStorage.setItem('team1User', 'C++ Bot')
     } else {
         team1UserElement.textContent = localStorage.getItem('team1User')
     }
@@ -589,18 +621,34 @@ const initialiseMiniMaxWebAssemblyModule = (callback) => {
     Module.onRuntimeInitialized = callback
 }
 
+const toCppBoard = (board) => {
+    let cppBoard = ""
+    for (let i = 0; i < 50; i += 2) {
+        const team = board[i]
+        const dots = board[i + 1]
+        cppBoard += `{${team}, ${dots}}, `
+        if ((i + 2) % 10 === 0) {
+            cppBoard += '\n'
+        }
+    }
+    console.log(cppBoard)
+}
+
 const MiniMax = (team, depth, board) => {
     // Create a pointer to a 'Board' structure in WASM memory
-    const boardSize = 25 * 8; // 25 tiles, each 8 bytes (2 integers)
+    const boardSize = 25 * 8; // 25 tiles, each 2 bytes (2 uint8)
     const boardPtr = Module._malloc(boardSize);
+    const cppBoard = []
 
     for (let i = 0; i < 50; i += 2) {
         const team = board[i]
         const dots = board[i + 1]
 
-        Module.setValue(boardPtr + (i * 4), team, 'i32');
-        Module.setValue(boardPtr + ((i + 1) * 4), dots, 'i32');
+        Module.setValue(boardPtr + (i), team, 'i8');
+        Module.setValue(boardPtr + (i + 1), dots, 'i8');
     }
+
+    // toCppBoard(board)
 
     // Wrap the `InitialiseMiniMax` function
     const InitialiseMiniMax = Module.cwrap('InitialiseMiniMax', 'number', [
@@ -610,13 +658,17 @@ const MiniMax = (team, depth, board) => {
         'number',
     ]);
 
+    // RenderCppBoard(board)
+
     // Call the function
     const result = InitialiseMiniMax(boardPtr, depth, gameIteration, team);
 
     // Free the allocated memory
     Module._free(boardPtr);
 
-    if (result === 25) {
+    // console.log('result', result)
+
+    if (result < 0 || result >= 25) {
         console.error("Computer did not pick a move")
         return null
     } else {
@@ -669,11 +721,14 @@ const botDepthElement = document.getElementById('botDepth')
 const botDepthMinusElement = document.getElementById('botDepthMinus')
 const newGameElement = document.getElementById('newGame')
 const resetStorageElement = document.getElementById('resetStorage')
+const gameTimerElement = document.getElementById('gameTimer')
 
 let gameIteration = -1
 let animating = true
 let wasmInitialized = false
 let hasGameEnded = false
+let gameIterationStartTime = 0;
+let teamElapsedTimes = [0, 0];
 const VERSION = '1' // if version changes, reset storage
 const tiles = []
 
@@ -690,5 +745,6 @@ updateGameIteration(true)
 generateBoard()
 updateTeamBackground()
 renderScoreRecords()
+updateTeamElapsedTime()
 animating = false
 console.log('color wars: loaded')

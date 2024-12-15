@@ -1,6 +1,7 @@
 // color_wars.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //
 
+#include <cstdint>
 #include <iostream>
 #include <chrono>
 
@@ -18,6 +19,9 @@
 #define WHITE_BG "\033[47m"
 #define RESET "\033[0m"
 #define RUN_IF_DEBUG(code) if(false) {code}
+
+typedef uint8_t Team;
+typedef uint8_t Dots;
 
 // UTILS
 
@@ -45,10 +49,10 @@ private:
 // VERSION 1
 
 struct Tile {
-    int team;
-    int dots;
+    Team team;
+    Dots dots;
 
-    Tile(int team = 0, int dots = 0): team(team), dots(dots) {}
+    Tile(Team team = 0, Dots dots = 0): team(team), dots(dots) {}
 };
 
 struct Board {
@@ -66,7 +70,7 @@ void logBoard(const Board& board) {
                 std::cout << background << ' ' << RESET;
             } else{
                 const char* color = (tile.team == 0) ? RED : GREEN;
-                std::cout << background << color << tile.dots << RESET;
+                std::cout << background << color << int(tile.dots) << RESET;
             }
         }
         std::cout << '\n';
@@ -144,6 +148,16 @@ const int TILE_WEIGHTS[25] = {
     1, 2, 3, 2, 1,
 };
 
+const int SEARCH_PATTERN[50] = {
+    2, 2, // 6
+    1, 1, 3, 1, 1, 3, 3, 3, // 5
+    2, 1, 1, 2, 3, 2, 2, 3, // 4
+    2, 0, 0, 2, 4, 2, 2, 4, // 3
+    1, 0, 3, 0, 0, 1, 4, 1, 0, 3, 4, 3, 1, 4, 3, 4, // 2
+    0, 0, 4, 0, 0, 4, 4, 4, // 1
+};
+
+
 int ScoreBoard(const Board& board, const int team) {
     // TODO: weight positions
     int posScore = 0;
@@ -179,9 +193,10 @@ bool HasTeamLost(const Board& board, const int team) {
     return true;
 }
 
-int minimax(const int gameIteration, const int depth, const int maxDepth, int alpha, int beta, const Board& board, const int team, int &nodesSearched) {
+
+int minimax(const int gameIteration, const int depth, const int maxDepth, int alpha, int beta, const Board& board, const Team team, int &nodesSearched) {
     nodesSearched++;
-    int currentTeam = (team + depth) % 2;
+    Team currentTeam = (team + depth) % 2;
     // if current team has lost then we stop search 
     const bool hasTeamLost = gameIteration > 1 && HasTeamLost(board, currentTeam);
     if (hasTeamLost) {
@@ -190,14 +205,14 @@ int minimax(const int gameIteration, const int depth, const int maxDepth, int al
         // if team = currentTeam then team has lost
         const int sign = currentTeam == team ? -1 : 1;
         const int score = (ScoreBoard(board, team) + (sign * bonus)) * (maxDepth + 1 - depth);
-       /* LOG("score* " << score);
+    /*    LOG("score* " << score);
         logBoard(board);*/
         return score;
     }
 
     if (depth == maxDepth) {
         const int score = ScoreBoard(board, team);
-       /* LOG("score " << score);
+    /*    LOG("score " << score);
         logBoard(board);*/
         return score;
     }
@@ -207,55 +222,57 @@ int minimax(const int gameIteration, const int depth, const int maxDepth, int al
    
     bool isMaximisingTeam = depth % 2 == 0;
 
-    for (int y = 0; y < 5; ++y) {
-        for (int x = 0; x < 5; ++x) {
-            const int i = x + y * 5;
-            const Tile& tile = board.tiles[i];
-            Board nextBoard;
-            if (gameIteration <= 1) {
-                if (tile.dots != 0) {
-                    continue;
-                }
-                nextBoard = board;
-                Tile& tile = nextBoard.tiles[i];
-                nextBoard.tiles[i].dots = 3;
-                nextBoard.tiles[i].team = currentTeam;
-            } else {
-                if (!(tile.dots > 0 && tile.team == currentTeam)) {
-                    continue;
-                }
-                nextBoard = board;
-                nextBoard.tiles[i].dots++;
+    for(int ii = 0; ii < 50; ii+=2) {
+        const int x = SEARCH_PATTERN[ii];
+        const int y = SEARCH_PATTERN[ii+1];
+        const int i = x + y * 5;
+        const Tile& tile = board.tiles[i];
+        Board nextBoard;
+        if (gameIteration <= 1) {
+            if (tile.dots != 0) {
+                continue;
             }
-
-            UpdateBoard(nextBoard);
-
-       /*     LOG(gameIteration << ' ' << depth << ' ' << x << ' ' << y);
-            logBoard(nextBoard);*/
-
-            const int score = minimax(gameIteration + 1, depth + 1, maxDepth, alpha, beta, nextBoard, team, nodesSearched);
-
-            // alpha-beta pruning
-            if (isMaximisingTeam) {
-                if (score > alpha) {
-                    alpha = score;
-
-                    bestMove = x + y * 5; // only used on depth=0
-                }
+            nextBoard = board;
+            Tile& tile = nextBoard.tiles[i];
+            nextBoard.tiles[i].dots = 3;
+            nextBoard.tiles[i].team = currentTeam;
+        } else {
+            if (!(tile.dots > 0 && tile.team == currentTeam)) {
+                continue;
             }
-            else if (score < beta) {
-                beta = score;
-            }
+            nextBoard = board;
+            nextBoard.tiles[i].dots++;
+        }
 
-            if (alpha >= beta) {
-                goto ExitLoop; // no need to search other moves
+        UpdateBoard(nextBoard);
+
+   /*     LOG(gameIteration << ' ' << depth << ' ' << x << ' ' << y);
+        logBoard(nextBoard);*/
+
+        const int score = minimax(gameIteration + 1, depth + 1, maxDepth, alpha, beta, nextBoard, team, nodesSearched);
+
+        //LOG('s' << score << ' ' << isMaximisingTeam << ' ' << alpha << ' ' << beta);
+        // alpha-beta pruning
+        if (isMaximisingTeam) {
+            if (score > alpha) {
+                alpha = score;
+
+                bestMove = x + y * 5; // only used on depth=0
             }
+        }
+        else if (score < beta) {
+            beta = score;
+        }
+
+        if (alpha >= beta) {
+            //goto ExitLoop; // no need to search other moves
+            break;
         }
     }
 
-ExitLoop:
+//ExitLoop:
     if (depth == 0) {
-        LOGI("alpha " << alpha);
+        //LOGI("alpha " << alpha);
         return bestMove;
     }
     else if (isMaximisingTeam) {
@@ -271,7 +288,7 @@ ExitLoop:
 extern "C" int InitialiseMiniMax(const Board& board, const int depth, const int gameIteration, const int team) {
     int nodesSearched = 0;
     const int i = minimax(gameIteration, 0, depth, MIN_SCORE, MAX_SCORE, board, team, nodesSearched);
-    LOGI("nodesSearched " << nodesSearched);
+    //LOGI("nodesSearched " << nodesSearched);
     return i;
 }
 
@@ -279,11 +296,11 @@ extern "C" int InitialiseMiniMax(const Board& board, const int depth, const int 
 void simpleTest() {
     
     Board board = Board();
-    board.tiles[2 + 2 * 5] = Tile(0, 3);
+    //board.tiles[2 + 2 * 5] = Tile(0, 3);
     //board.tiles[1 + 1 * 5] = Tile(1, 3);
     logBoard(board);
 
-    for (int n = 1; n < 2; ++n) {
+    for (int n = 0; n < 50; ++n) {
         LOGI("round " << n);
         Timer t = Timer();
         const int team = n % 2;
@@ -318,24 +335,45 @@ void simpleTest() {
 
 void performanceTest(const int n) {
     Board board = Board();
-    board.tiles[2 + 1 * 5] = Tile(0, 2);
-    board.tiles[1 + 2 * 5] = Tile(0, 2);
-    board.tiles[2 + 3 * 5] = Tile(1, 3);
-    board.tiles[3 + 2 * 5] = Tile(1, 1);
-    int numMovesGenerated = 0;
+
+    //const Tile tiles[25] = {
+    //    {0, 0},{1, 2},{1, 1},{0, 1},{0, 1},
+    //    {1, 1},{1, 1},{0, 0},{1, 2},{0, 2},
+    //    {1, 1},{1, 1},{1, 2},{1, 3},{1, 3},
+    //    {0, 0},{1, 2},{1, 2},{0, 0},{1, 2},
+    //    {0, 0},{0, 0},{1, 1},{1, 2},{0, 0},
+    //};
+
+    const Tile tiles[25] = {
+        {0, 3}, {0, 2}, {0, 3}, {0, 2}, {0, 0},
+        {0, 0}, {0, 2}, {0, 0}, {0, 2}, {0, 1},
+        {0, 2}, {0, 1}, {0, 3}, {0, 1}, {0, 2},
+        {1, 3}, {0, 3}, {0, 3}, {0, 3}, {0, 0},
+        {0, 2}, {0, 0}, {0, 1}, {0, 1}, {0, 0},
+    };
+
+    for (int i = 0; i < 25; ++i) {
+        board.tiles[i] = tiles[i];
+    }
+    logBoard(board);
+
+    int j = 0;
 
     Timer t = Timer();
-    for (int i = 0; i < n; ++i) {
-        numMovesGenerated += generateNextMoves(board, 0);
-    }
-    LOG(numMovesGenerated);
+    //for (int i = 0; i < n; ++i) {
+    j += InitialiseMiniMax(board, 8, 55, 0);
+    //}
+    const int x = j % 5;
+    const int y = j / 5;
+    LOG("move " << x << ' ' << y);
+    LOG(j);
     LOG(t.elapsedMilliseconds());
 }
 
 int main()
 {
     LOG("Color Wars");
-    simpleTest();
-    //performanceTest(1000000000); // 1_000_000_000
+    //simpleTest();
+    performanceTest(1); // 1_000_000_000
     return 0;
 }
