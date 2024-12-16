@@ -3,11 +3,11 @@ const incrementTile = (x, y, team) => {
         return
     }
     const tile = tiles[x + y * 5]
-    let dots = Number(tile.textContent)
+    let [teamNo, dots] = getTileDetails(tile)
 
     dots = Math.min(dots + 1, 4)
-
-    tile.textContent = dots
+    setTile(tile, Number(team[4]) - 1, dots)
+    // tile.textContent = dots
 
     tile.classList.remove('team1')
     tile.classList.remove('team2')
@@ -18,30 +18,41 @@ const sleep = ms => {
     return new Promise(resolve => setTimeout(resolve, ms))
 }
 
-const updateBoard = () => {
+const updateBoard = async () => {
     let updateCount = 0
+    let tileIncrements = []
     for (let i = 0; i < 25; i++) {
         const tile = tiles[i]
-        const dots = Number(tile.textContent)
-        let team = null
+        // const dots = Number(tile.textContent)
+        // let team = null
+        let [teamNo, dots] = getTileDetails(tile)
         if (dots >= 4) {
             updateCount++
-            if (tile.classList.contains('team1')) {
+            if (teamNo === 0) {
                 team = 'team1'
             } else {
                 team = 'team2'
             }
 
-            tile.textContent = ''
+            // tile.textContent = ''
+
             // tile.classList.remove(team)
 
             const x = i % 5
             const y = Math.floor(i / 5)
-            incrementTile(x + 1, y, team)
-            incrementTile(x - 1, y, team)
-            incrementTile(x, y + 1, team)
-            incrementTile(x, y - 1, team)
+            tileIncrements.push(() => {
+                setTile(tile, teamNo, 0)
+                incrementTile(x + 1, y, team)
+                incrementTile(x - 1, y, team)
+                incrementTile(x, y + 1, team)
+                incrementTile(x, y - 1, team)
+            })
+            // break;
         }
+    }
+    await sleep(boardAnimationPeriod);
+    for (const tileIncrement of tileIncrements) {
+        tileIncrement()
     }
     return updateCount > 0
 }
@@ -222,18 +233,10 @@ const updateTeamBackground = () => {
 }
 
 const makeComputerMove_GoBot = (dryRun = false) => {
-
     const board = []
     for (let i = 0; i < 25; i++) {
-        const tile = tiles[i]
-        let teamOfTile = 0
-        if (tile.classList.contains('team1')) {
-            teamOfTile = 0
-        } else if (tile.classList.contains('team2')) {
-            teamOfTile = 1
-        }
-        const dots = Number(tile.textContent)
-        board.push(dots, teamOfTile)
+        const [team, dots] = getTileDetails(tiles[i])
+        board.push(dots, team)
     }
     // console.log(board);
 
@@ -291,18 +294,11 @@ const makeComputerMove_GoBot = (dryRun = false) => {
 const makeComputerMove_CppBot = () => {
     const board = []
     for (let i = 0; i < 25; i++) {
-        const tile = tiles[i]
-        let teamOfTile = 0
-        if (tile.classList.contains('team1')) {
-            teamOfTile = 0
-        } else if (tile.classList.contains('team2')) {
-            teamOfTile = 1
-        }
-        const dots = Number(tile.textContent)
-        board.push(teamOfTile, dots)
+        const [team, dots] = getTileDetails(tiles[i])
+        board.push(team, dots)
     }
-    // RenderCppBoard(board)
-    // console.log(board);
+
+    // console.log(board)
 
     const teamNumToPlay = getTeamNumToPlay()
 
@@ -387,34 +383,34 @@ const makeComputerMove = async () => {
 }
 
 const makeMove = async tile => {
-    let teamOfTile = null
-    if (tile.classList.contains('team1')) {
-        teamOfTile = 'team1'
-    } else if (tile.classList.contains('team2')) {
-        teamOfTile = 'team2'
-    }
+    let [teamNumOfTile, dots] = getTileDetails(tile)
+    const teamOfTile = dots === 0 ? null : `team${teamNumOfTile + 1}`
+
+    // console.log({ teamNumOfTile, dots, teamOfTile })
 
     const teamToPlay = getTeamToPlay()
     let didPlayerMove = false
 
     if (teamOfTile !== null && teamToPlay === teamOfTile) {
-        let dots = Number(tile.textContent)
         dots = Math.min(dots + 1, 4)
-        tile.textContent = dots
+        // tile.textContent = dots
+        setTile(tile, gameIteration % 2, dots)
 
         for (let tile1 of tiles) {
             tile1.classList.remove('lastMove')
         }
         tile.classList.add('lastMove')
-
-        await sleep(boardAnimationPeriod)
-        while (updateBoard()) {
+        if (dots === 4) {
+            await sleep(boardAnimationPeriod)
+        }
+        while (await updateBoard()) {
             await sleep(boardAnimationPeriod)
         }
         updateGameIteration()
         didPlayerMove = true
     } else if (teamOfTile === null && gameIteration < 2) {
-        tile.textContent = 3
+        // tile.textContent = 3
+        setTile(tile, gameIteration % 2, 3)
         tile.classList.add(`team${gameIteration + 1}`)
         for (let tile1 of tiles) {
             tile1.classList.remove('lastMove')
@@ -442,6 +438,60 @@ const makeUserMove = async tile => {
     }
 }
 
+const getTileDetails = (tileElement) => {
+    const index = tileElement.id.slice(4)
+    return boardTiles[index]
+}
+
+const boardTiles = Array(25).map(() => [0, 0])
+const setTile = (tileElement, team, dots) => {
+    const index = tileElement.id.slice(4)
+    boardTiles[index] = [team, dots]
+    for (let dot = 1; dot <= dots; dot++) {
+        const dotElement = tileElement.getElementsByClassName(`dotNo${dot}`)[0]
+        dotElement.style.opacity = 1;
+
+        const totalDotsClass = Array.from(dotElement.classList).find(className => className.startsWith('totalDots'));
+        if (totalDotsClass) {
+            dotElement.classList.remove(totalDotsClass);
+        }
+
+        const dotsNoClass = Array.from(dotElement.classList).find(className => className.startsWith('dotNo'));
+        if (dotsNoClass) {
+            dotElement.classList.remove(dotsNoClass);
+        }
+
+        dotElement.classList.add(`totalDots${dots}`)
+        dotElement.classList.add(`dotNo${dot}`)
+
+        const randomColor = `hsl(${team === 0 ? 0 : 135}, 100%, ${Math.floor(Math.random() * 6) + 47}%)`; // Random HSL color
+        dotElement.style.backgroundColor = randomColor;
+    }
+    for (let dot = dots + 1; dot <= 4; dot++) {
+        const dotElements = tileElement.getElementsByClassName(`dotNo${dot}`)
+        if (dotElements.length > 0) {
+            const dotElement = dotElements[0];
+            dotElement.style.opacity = 0;
+
+            const totalDotsClass = Array.from(dotElement.classList).find(className => className.startsWith('totalDots'));
+            if (totalDotsClass) {
+                dotElement.classList.remove(totalDotsClass);
+            }
+        }
+    }
+}
+
+// let jk = 2;
+// const randomiseBoard = () => {
+//     jk++
+//     console.log('randomiseBoard', jk)
+//     for (let i = 0; i < 25; i++) {
+//         const dots = jk % 5
+//         const team = i % 2
+//         setTile(tiles[i], team, dots)
+//     }
+// }
+
 const generateBoard = () => {
     // const initBoard = [
     //     [0, 0], [1, 2], [1, 1], [0, 1], [0, 1],
@@ -450,15 +500,37 @@ const generateBoard = () => {
     //     [0, 0], [1, 2], [1, 2], [0, 0], [1, 2],
     //     [0, 0], [0, 0], [1, 1], [1, 2], [0, 0],
     // ]
+    const initBoard = [
+        [0, 0], [0, 0], [1, 1], [0, 0], [0, 0],
+        [0, 0], [0, 0], [1, 3], [0, 0], [0, 0],
+        [0, 3], [0, 3], [0, 3], [0, 3], [0, 3],
+        [0, 0], [0, 0], [1, 3], [0, 0], [0, 0],
+        [0, 0], [0, 0], [1, 1], [0, 0], [0, 0],
+
+    ]
     // Generate the grid with random numbers
     for (let i = 0; i < 25; i++) {
         const tile = document.createElement('div')
+
         tile.className = 'tile'
-        const dots = 0; //initBoard[i][1]
-        const team = 0; // initBoard[i][0]
-        tile.textContent = dots == 0 ? '' : dots
+        const dots = initBoard[i][1]
+        const team = initBoard[i][0]
+        // tile.textContent = dots == 0 ? '' : dots
         const teamCls = `team${team + 1}`
         tile.classList.add(teamCls)
+
+        tile.id = `tile${i}`
+
+        for (let dot = 1; dot <= 4; dot++) {
+            const dotElement = document.createElement('div')
+            dotElement.classList.add('dot')
+            dotElement.classList.add(`dotNo${dot}`)
+            dotElement.style.opacity = 0;
+            tile.appendChild(dotElement)
+        }
+
+        setTile(tile, team, dots)
+
 
         const randomColor = `hsl(30, 3%, ${Math.floor(Math.random() * 6) + 23}%)`; // Random HSL color
         tile.style.backgroundColor = randomColor;
@@ -478,10 +550,10 @@ const scoreBoard = () => {
     let team2Score = 0
     for (let i = 0; i < 25; i++) {
         const tile = tiles[i]
-        const dots = Number(tile.textContent)
-        if (tile.classList.contains('team1')) {
+        let [team, dots] = getTileDetails(tile)
+        if (team === 0) {
             team1Score += dots
-        } else if (tile.classList.contains('team2')) {
+        } else if (team === 1) {
             team2Score += dots
         }
     }
@@ -566,7 +638,7 @@ const initialiseSettings = () => {
         hasGameEnded = false
 
         for (let tile of tiles) {
-            tile.textContent = ''
+            setTile(tile, 0, 0)
             tile.classList.remove('team1')
             tile.classList.remove('team2')
             tile.classList.remove('lastMove')
@@ -723,8 +795,8 @@ const newGameElement = document.getElementById('newGame')
 const resetStorageElement = document.getElementById('resetStorage')
 const gameTimerElement = document.getElementById('gameTimer')
 
-const boardAnimationPeriod = 250; // milliseconds
-const botMinPlayPeriod = 250; // milliseconds
+const boardAnimationPeriod = 400; // milliseconds
+const botMinPlayPeriod = 400; // milliseconds
 let gameIteration = -1
 let animating = true
 let wasmInitialized = false
@@ -750,3 +822,7 @@ renderScoreRecords()
 updateTeamElapsedTime()
 animating = false
 console.log('color wars: loaded')
+
+// setInterval(() => {
+//     randomiseBoard()
+// }, 2000)

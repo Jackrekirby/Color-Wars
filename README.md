@@ -61,7 +61,7 @@ Assuming B plays optimally, A should pick A2 because B can only get a maximum of
 4. X Choose between two players and bot
 5. X Choose between two bots
 6. Change number of points for tile split
-7. Walls
+7. Walls (absorbs points of neighbours)
 8. Empty tiles which provide additional points
 9. Defensive (tank) Tiles
 10. Leaping tiles

@@ -16,12 +16,16 @@ button {
   font-family: CustomFont, sans-serif !important;
 }
 
+html {
+  height: 100%;
+}
+
 body {
   display: flex;
   justify-content: center;
   align-items: center;
   flex-direction: column;
-  height: 100vh;
+  height: 100%;
   margin: 0;
   background-color: var(--dark-gray);
   overflow: hidden;
@@ -174,6 +178,54 @@ body {
   width: 128px;
 }
 
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 10px;
+
+  position: absolute;
+
+  transition: transform 0.25s ease-in-out, opacity 0.25s ease-in-out;
+  transform: translate(0%, 0%);
+}
+
+.totalDots1.dotNo1 {
+  transform: translate(0%, 0%);
+}
+.totalDots2.dotNo1 {
+  transform: translate(-100%, 0%);
+}
+.totalDots2.dotNo2 {
+  transform: translate(100%, 0%);
+}
+
+.totalDots3.dotNo3 {
+  transform: translate(-100%, 100%); /* Left corner of the base */
+}
+.totalDots3.dotNo1 {
+  transform: translate(100%, 100%); /* Right corner of the base */
+}
+.totalDots3.dotNo2 {
+  transform: translate(0%, -100%); /* Apex above the midpoint */
+}
+
+.totalDots4.dotNo2 {
+  transform: translate(-100%, 0%); /* Left corner of the base */
+}
+.totalDots4.dotNo3 {
+  transform: translate(100%, 0%); /* Right corner of the base */
+}
+.totalDots4.dotNo1 {
+  transform: translate(0%, -100%); /* Apex above the midpoint */
+}
+.totalDots4.dotNo4 {
+  transform: translate(0%, 100%); /* Apex above the midpoint */
+}
+
+.lastMove > .dot {
+  background-color: var(--mid-gray) !important;
+}
+
 #botDepth {
   width: 64px;
 }
@@ -239,8 +291,8 @@ p {
   position: absolute;
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
   padding: 16px;
@@ -282,7 +334,7 @@ p {
   justify-content: center;
   align-items: center;
   flex-direction: column;
-  height: 100vh;
+  height: 100%;
   width: 100%;
   margin: 0;
   overflow: hidden;
