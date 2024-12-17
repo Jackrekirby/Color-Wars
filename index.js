@@ -159,7 +159,7 @@ const renderScoreRecords = () => {
 }
 
 const updateGameIteration = (firstLoad = false) => {
-    if (gameIteration == -1) {
+    if (gameIteration === -1) {
         botStatusElement.textContent = ''
         teamElapsedTimes = [0, 0]
     }

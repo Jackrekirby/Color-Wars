@@ -37,6 +37,13 @@ Assuming B plays optimally, A should pick A2 because B can only get a maximum of
 
 ## Tasks
 
+## Clean Up
+
+1. Rewrite JS in TS
+2. Seperate DOM and Game Logic
+3. Remove GO Bot
+4. Restructure files to minimise files in root and remove duplicate color_wars folders
+
 ### Optimisation
 
 1. X Search tiles by potential for best scoring (middle, out)
