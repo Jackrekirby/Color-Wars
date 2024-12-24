@@ -15,6 +15,8 @@ import { LocalStorageKeys, Elements, Page, PageManager } from './types'
 
 const localStorageKeys: LocalStorageKeys = {
   botDepth: 'botDepth',
+  boardWidth: 'boardWidth',
+  boardHeight: 'boardHeight',
   botWaitPeriod: 'botWaitPeriod',
   tileUpdatePeriod: 'tileUpdatePeriod',
   player: (index: number) => `player${index}`,
@@ -50,7 +52,11 @@ const InitialiseElements = (): Elements => {
     'botWaitPeriod',
     'tileUpdatePeriod',
     'botWaitPeriodMinus',
-    'tileUpdatePeriodMinus'
+    'tileUpdatePeriodMinus',
+    'boardWidth',
+    'boardWidthMinus',
+    'boardHeight',
+    'boardHeightMinus'
   ]
 
   const elements: { [key: string]: HTMLElement | null } = Object.fromEntries(
@@ -94,7 +100,11 @@ const InitialiseElements = (): Elements => {
     botWaitPeriod: elements['botWaitPeriod'] as HTMLElement,
     tileUpdatePeriod: elements['tileUpdatePeriod'] as HTMLElement,
     botWaitPeriodMinus: elements['botWaitPeriodMinus'] as HTMLElement,
-    tileUpdatePeriodMinus: elements['tileUpdatePeriodMinus'] as HTMLElement
+    tileUpdatePeriodMinus: elements['tileUpdatePeriodMinus'] as HTMLElement,
+    boardWidth: elements['boardWidth'] as HTMLElement,
+    boardWidthMinus: elements['boardWidthMinus'] as HTMLElement,
+    boardHeight: elements['boardHeight'] as HTMLElement,
+    boardHeightMinus: elements['boardHeightMinus'] as HTMLElement
   }
 }
 
@@ -189,8 +199,8 @@ const MakePlayer = (playerIndex: PlayerIndex): Player => {
   if (playerOption === PlayerOption.User) {
     return NewPlayerUser()
   } else {
-    const botSearchDepth = Number(elements.botDepth.textContent)
-    return NewPlayerBot(botSearchDepth)
+    const botDepth = Number(elements.botDepth.textContent)
+    return NewPlayerBot(botDepth)
   }
 }
 
@@ -268,8 +278,8 @@ export const InitialiseElementEvents = (game: Game, bot: GameBot) => {
     if (!bot.IsReady()) {
       console.warn('Bot is not ready for a new game')
     }
-    const width: number = 5
-    const height: number = 5
+    const width: number = Number(elements.boardWidth.textContent)
+    const height: number = Number(elements.boardHeight.textContent)
 
     game.NewGame(width, height, MakePlayer(0), MakePlayer(1))
 
@@ -308,6 +318,8 @@ export const InitialiseElementEvents = (game: Game, bot: GameBot) => {
   )})`
 
   CyclicCounterManager(1, 16, 8, 1, 'botDepth', () => {})
+  CyclicCounterManager(3, 9, 5, 1, 'boardWidth', () => {})
+  CyclicCounterManager(3, 9, 5, 1, 'boardHeight', () => {})
   CyclicCounterManager(0, 2000, 500, 50, 'botWaitPeriod', game.SetBotWaitPeriod)
   CyclicCounterManager(
     0,
@@ -469,6 +481,35 @@ const InitialiseBoard = (game: Game): void => {
     elements.board.removeChild(elements.board.firstChild)
   }
 
+  const tilesInOneAxis: number = Math.max(width, height)
+  const boardSize: number = 340
+  const tileGapRatio: number = 10 / 60
+  const tileFontRatio: number = 28 / 60
+  const tileBorderRadiusRatio: number = 8 / 60
+  const tileSize: number = Math.round(
+    boardSize / (tilesInOneAxis + tileGapRatio * (tilesInOneAxis - 1))
+  )
+  const gapSize: number = Math.round(tileSize * tileGapRatio)
+  const fontSize: number = Math.round(tileSize * tileFontRatio)
+  const borderRadius: number = Math.round(tileSize * tileBorderRadiusRatio)
+
+  // console.log({
+  //   width,
+  //   height,
+  //   tilesInOneAxis,
+  //   boardSize,
+  //   tileGapRatio,
+  //   tileSize,
+  //   gapSize,
+  //   fontSize,
+  //   borderRadius
+  // })
+
+  const gridTemplate: string = `repeat(${tilesInOneAxis}, ${tileSize}px)`
+  elements.board.style.gridTemplateColumns = gridTemplate
+  elements.board.style.gridTemplateRows = gridTemplate
+  elements.board.style.gap = `${gapSize}px`
+
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const tileElement = document.createElement('div')
@@ -486,6 +527,10 @@ const InitialiseBoard = (game: Game): void => {
 
       const randomColor = `hsl(30, 3%, ${Math.floor(Math.random() * 6) + 23}%)` // Random HSL color
       tileElement.style.backgroundColor = randomColor
+      tileElement.style.width = `${tileSize}px`
+      tileElement.style.height = `${tileSize}px`
+      tileElement.style.fontSize = `${fontSize}px`
+      tileElement.style.borderRadius = `${borderRadius}px`
 
       tileElement.onclick = async () => {
         const canPlayerMove: boolean = game.CanPlayerMove(x, y)

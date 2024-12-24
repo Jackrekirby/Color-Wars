@@ -36,10 +36,16 @@ export interface Elements {
   tileUpdatePeriod: HTMLElement
   botWaitPeriodMinus: HTMLElement
   tileUpdatePeriodMinus: HTMLElement
+  boardWidth: HTMLElement
+  boardWidthMinus: HTMLElement
+  boardHeight: HTMLElement
+  boardHeightMinus: HTMLElement
 }
 
 export interface LocalStorageKeys {
   botDepth: 'botDepth'
+  boardWidth: 'boardWidth'
+  boardHeight: 'boardHeight'
   botWaitPeriod: 'botWaitPeriod'
   tileUpdatePeriod: 'tileUpdatePeriod'
   player: (index: number) => string

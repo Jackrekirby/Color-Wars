@@ -17,7 +17,7 @@
           <h1 class="left-pill">Color</h1>
           <h1 class="right-pill">Wars</h1>
         </div>
-        <p>
+        <p class="note">
           Fill the entire board with your color. Click on one of your tiles to
           increment its score. When a tile reaches four points it splits into
           four one-point tiles, engulfing neighbouring tiles. One your first
@@ -51,9 +51,27 @@
         </div>
         <div class="buttonWrapper">
           <label>Bot Search Depth</label>
-          <div>
+          <div class="cyclicCounter">
             <div id="botDepthMinus" class="button">-</div>
             <div id="botDepth" class="button">8</div>
+          </div>
+        </div>
+        <p class="note">
+          For a competitive bot, the search depth should be atleast that of the
+          longest board edge
+        </p>
+        <div class="buttonWrapper">
+          <label>Board Width</label>
+          <div class="cyclicCounter">
+            <div id="boardWidthMinus" class="button">-</div>
+            <div id="boardWidth" class="button">5</div>
+          </div>
+        </div>
+        <div class="buttonWrapper">
+          <label>Board Height</label>
+          <div class="cyclicCounter">
+            <div id="boardHeightMinus" class="button">-</div>
+            <div id="boardHeight" class="button">5</div>
           </div>
         </div>
         <div id="newGame" class="button full">Start Game</div>
@@ -69,20 +87,28 @@
         <div id="version"></div>
         <h2>Settings</h2>
         <div class="buttonWrapper">
-          <label>Bot Wait Period (ms)</label>
+          <label>Bot Wait Period</label>
           <div>
             <div id="botWaitPeriodMinus" class="button">-</div>
             <div id="botWaitPeriod" class="button">500</div>
           </div>
         </div>
+        <p class="note">
+          The minimum time in milliseconds a bot will wait to make a move once
+          it is the bots turn
+        </p>
         <div class="buttonWrapper">
-          <label>Tile Update Period (ms)</label>
+          <label>Tile Update Period</label>
           <div>
             <div id="tileUpdatePeriodMinus" class="button">-</div>
             <div id="tileUpdatePeriod" class="button">500</div>
           </div>
         </div>
+        <p class="note">
+          The time in milliseconds between chain reactions of tile updates
+        </p>
         <div id="resetStorage" class="button full">Reset Storage</div>
+        <p class="note">Clears all score records and settings</p>
       </div>
     </div>
 
@@ -93,6 +119,14 @@
           <h1 class="right-pill">Wars</h1>
         </div>
         <h2>Score Records</h2>
+        <p class="note">
+          When playing user versus bot, the record displayed is that of the user
+          winning in the fewest number of rounds, or if has never won, the user
+          losing having lasted the highest number of rounds.
+        </p>
+        <p class="note">
+          In user-user or bot-bot games, only the latest record is displayed.
+        </p>
         <div id="scoreRecords"></div>
       </div>
     </div>

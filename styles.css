@@ -34,8 +34,13 @@ body {
   display: grid;
   grid-template-columns: repeat(5, 60px);
   grid-template-rows: repeat(5, 60px);
-  gap: 10px;
+  gap: 8px;
   margin: 16px 0px;
+}
+
+.note {
+  text-align: justify;
+  color: hsl(30, 3%, 76%);
 }
 
 .tile {
@@ -224,10 +229,10 @@ body {
   background-color: var(--mid-gray) !important;
 }
 
-#botDepth {
+.cyclicCounter > :nth-child(2) {
   width: 64px;
 }
-#botDepthMinus {
+.cyclicCounter > :nth-child(1) {
   width: 48px;
   margin-right: 7px;
 }
