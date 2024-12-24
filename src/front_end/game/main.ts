@@ -58,7 +58,7 @@ export const CreateGame = (): Game => {
   let round: number = 0
   let hasGameEnded: boolean = true
   let isPlayerMoving = false
-  let _animationPeriod: number = 500 // milliseconds
+  let _tileUpdatePeriod: number = 500 // milliseconds
   let _botWaitPeriod: number = 500 // milliseconds
   let _width: number = 0
   let _height: number = 0
@@ -82,8 +82,8 @@ export const CreateGame = (): Game => {
 
   newRoundCallbackHandler.addCallback(MakeComputerMove)
 
-  const SetAnimationPeriod = (animationPeriod: number) => {
-    _animationPeriod = animationPeriod
+  const SetTileUpdatePeriod = (tileUpdatePeriod: number) => {
+    _tileUpdatePeriod = tileUpdatePeriod
   }
 
   const SetBotWaitPeriod = (botWaitPeriod: number) => {
@@ -193,7 +193,7 @@ export const CreateGame = (): Game => {
   const UpdateTilesOneIteration = async (): Promise<boolean> => {
     const callbacks: (() => void)[] = GetTileUpdateCallbacks()
     if (callbacks.length > 0) {
-      await Sleep(_animationPeriod)
+      await Sleep(_tileUpdatePeriod)
       for (const callback of callbacks) {
         callback()
       }
@@ -389,7 +389,7 @@ export const CreateGame = (): Game => {
     CanPlayerMove,
     GetPlayerMoves,
     TerminateGame,
-    SetAnimationPeriod,
+    SetTileUpdatePeriod: SetTileUpdatePeriod,
     SetBotWaitPeriod
   }
 

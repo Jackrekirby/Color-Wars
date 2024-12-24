@@ -274,14 +274,17 @@ p {
 
 #version {
   padding: 8px 0px;
+  font-size: 14px;
+  align-self: center;
 }
 
 #gotoHome {
   position: absolute;
+  --size: 32px;
   top: 16px;
   right: 16px;
-  width: 16px;
-  height: 16px;
+  width: var(--size);
+  height: var(--size);
   cursor: pointer;
   z-index: 100;
 }

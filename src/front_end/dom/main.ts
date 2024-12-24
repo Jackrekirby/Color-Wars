@@ -10,78 +10,55 @@ import {
   ScoreRecords,
   Tile
 } from '../game/types'
-import { FormatDate, millisToMMSS } from '../utils'
+import { FormatDate, millisToMMSS, NewCallbackHandler } from '../utils'
 import { LocalStorageKeys, Elements, Page, PageManager } from './types'
 
 const localStorageKeys: LocalStorageKeys = {
   botDepth: 'botDepth',
+  botWaitPeriod: 'botWaitPeriod',
+  tileUpdatePeriod: 'tileUpdatePeriod',
   player: (index: number) => `player${index}`,
   scoreRecords: 'scoreRecords'
 }
 
 const InitialiseElements = (): Elements => {
-  // all pages
-  const gotoHomeElement = document.getElementById('gotoHome')
+  const elementNames: string[] = [
+    // pages
+    'pageMenu',
+    'pageSettings',
+    'pageScoreRecords',
+    'pageNewGame',
+    'pageGame',
+    // players
+    'player1User',
+    'player2User',
+    // components
+    'newGame',
+    'gotoHome',
+    'botDepth',
+    'botDepthMinus',
+    'resetStorage',
+    'gameTimer',
+    'botStatus',
+    'gameIteration',
+    'scoreRecords',
+    'board',
+    'openPageNewGame',
+    'openPageScoreRecords',
+    'openPageSettings',
+    'version',
+    'botWaitPeriod',
+    'tileUpdatePeriod',
+    'botWaitPeriodMinus',
+    'tileUpdatePeriodMinus'
+  ]
 
-  // game page
-  const boardElement = document.getElementById('grid')
-  const gameTimerElement = document.getElementById('gameTimer')
-  const botStatusElement = document.getElementById('botStatus')
-
-  // new game page
-  const iterationElement = document.getElementById('gameIteration')
-  const player1Element = document.getElementById('team1User')
-  const player2Element = document.getElementById('team2User')
-  const botDepthElement = document.getElementById('botDepth')
-  const botDepthMinusElement = document.getElementById('botDepthMinus')
-  const newGameElement = document.getElementById('newGame')
-
-  // settings page
-  const resetStorageElement = document.getElementById('resetStorage')
-  const versionElement = document.getElementById('version')
-
-  // score records page
-  const scoreboardElement = document.getElementById('scoreRecords')
-
-  // menu page
-  const openPageNewGameElement = document.getElementById('openPageNewGame')
-  const openPageScoreRecordsElement = document.getElementById(
-    'openPageScoreRecords'
+  const elements: { [key: string]: HTMLElement | null } = Object.fromEntries(
+    elementNames.map(name => [name, document.getElementById(name)])
   )
-  const openPageSettingsElement = document.getElementById('openPageSettings')
 
-  // pages
-  const pageMenuElement = document.getElementById('pageMenu')
-  const pageNewGameElement = document.getElementById('pageNewGame')
-  const pageSettingsElement = document.getElementById('pageSettings')
-  const pageScoreRecordsElement = document.getElementById('pageScoreRecords')
-  const pageGameElement = document.getElementById('pageGame')
-
-  const allElements: { [key: string]: HTMLElement | null } = {
-    boardElement,
-    iterationElement,
-    botStatusElement,
-    gotoHomeElement,
-    pageMenuElement,
-    pageNewGameElement,
-    pageSettingsElement,
-    pageScoreRecordsElement,
-    pageGameElement,
-    player1Element,
-    player2Element,
-    botDepthElement,
-    botDepthMinusElement,
-    newGameElement,
-    resetStorageElement,
-    gameTimerElement,
-    scoreboardElement,
-    openPageNewGameElement,
-    openPageScoreRecordsElement,
-    openPageSettingsElement,
-    versionElement
-  }
-  const nullElements = Object.keys(allElements).filter(
-    key => allElements[key] === null
+  const nullElements = Object.keys(elements).filter(
+    key => elements[key] === null
   )
   if (nullElements.length > 0) {
     throw new Error(
@@ -90,27 +67,34 @@ const InitialiseElements = (): Elements => {
   }
   return {
     pages: {
-      Menu: pageMenuElement as HTMLElement,
-      NewGame: pageNewGameElement as HTMLElement,
-      Settings: pageSettingsElement as HTMLElement,
-      ScoreRecords: pageScoreRecordsElement as HTMLElement,
-      Game: pageGameElement as HTMLElement
+      Menu: elements['pageMenu'] as HTMLElement,
+      NewGame: elements['pageNewGame'] as HTMLElement,
+      Settings: elements['pageSettings'] as HTMLElement,
+      ScoreRecords: elements['pageScoreRecords'] as HTMLElement,
+      Game: elements['pageGame'] as HTMLElement
     },
-    newGame: newGameElement as HTMLElement,
-    gotoHome: gotoHomeElement as HTMLElement,
-    players: [player1Element, player2Element] as HTMLElement[],
-    botDepth: botDepthElement as HTMLElement,
-    botDepthMinus: botDepthMinusElement as HTMLElement,
-    resetStorage: resetStorageElement as HTMLElement,
-    gameTimer: gameTimerElement as HTMLElement,
-    botStatus: botStatusElement as HTMLElement,
-    round: iterationElement as HTMLElement,
-    scoreboard: scoreboardElement as HTMLElement,
-    board: boardElement as HTMLElement,
-    openPageNewGame: openPageNewGameElement as HTMLElement,
-    openPageScoreRecords: openPageScoreRecordsElement as HTMLElement,
-    openPageSettings: openPageSettingsElement as HTMLElement,
-    version: versionElement as HTMLElement
+    newGame: elements['newGame'] as HTMLElement,
+    gotoHome: elements['gotoHome'] as HTMLElement,
+    players: [
+      elements['player1User'],
+      elements['player2User']
+    ] as HTMLElement[],
+    botDepth: elements['botDepth'] as HTMLElement,
+    botDepthMinus: elements['botDepthMinus'] as HTMLElement,
+    resetStorage: elements['resetStorage'] as HTMLElement,
+    gameTimer: elements['gameTimer'] as HTMLElement,
+    botStatus: elements['botStatus'] as HTMLElement,
+    round: elements['gameIteration'] as HTMLElement,
+    scoreboard: elements['scoreRecords'] as HTMLElement,
+    board: elements['board'] as HTMLElement,
+    openPageNewGame: elements['openPageNewGame'] as HTMLElement,
+    openPageScoreRecords: elements['openPageScoreRecords'] as HTMLElement,
+    openPageSettings: elements['openPageSettings'] as HTMLElement,
+    version: elements['version'] as HTMLElement,
+    botWaitPeriod: elements['botWaitPeriod'] as HTMLElement,
+    tileUpdatePeriod: elements['tileUpdatePeriod'] as HTMLElement,
+    botWaitPeriodMinus: elements['botWaitPeriodMinus'] as HTMLElement,
+    tileUpdatePeriodMinus: elements['tileUpdatePeriodMinus'] as HTMLElement
   }
 }
 
@@ -120,10 +104,6 @@ const SetElementVisibility = (element: HTMLElement, visible: boolean): void => {
   } else {
     element.classList.add('hide')
   }
-}
-
-const ToggleElementVisibility = (element: HTMLElement): void => {
-  element.classList.toggle('hide')
 }
 
 const GetLocalStorageItem = (
@@ -150,18 +130,49 @@ const CyclePlayerOption = (playerIndex: number) => {
   )
 }
 
-const CycleBotDepth = (increment: number) => {
-  let depth = Number(elements.botDepth.textContent)
-  depth += increment
-  if (depth <= 0) {
-    depth = 16
-  } else if (depth > 16) {
-    depth = 1
+const CyclicCounterManager = (
+  min: number,
+  max: number,
+  defaultValue: number,
+  increment: number,
+  name: keyof Elements,
+  onChangeCallback: (value: number) => void
+) => {
+  const minusElement = elements[
+    (name + 'Minus') as keyof Elements
+  ] as HTMLElement
+  const plusElement = elements[name] as HTMLElement // also display element
+
+  const storageKey = localStorageKeys[name as keyof LocalStorageKeys] as string
+
+  const Initialise = () => {
+    plusElement.textContent = GetLocalStorageItem(
+      storageKey,
+      String(defaultValue)
+    )
+    onChangeCallback(defaultValue)
+  }
+  Initialise()
+
+  resetStorageCallbackHandler.addCallback(Initialise)
+
+  const CycleCounter = (increment: number) => {
+    let value = Number(plusElement.textContent)
+    value += increment
+    if (value < min) {
+      value = max
+    } else if (value > max) {
+      value = min
+    }
+
+    const valueStr = String(value)
+    plusElement.textContent = valueStr
+    localStorage.setItem(storageKey, valueStr)
+    onChangeCallback(value)
   }
 
-  const depthStr = String(depth)
-  elements.botDepth.textContent = depthStr
-  localStorage.setItem(localStorageKeys.botDepth, depthStr)
+  plusElement.onclick = () => CycleCounter(increment)
+  minusElement.onclick = () => CycleCounter(-increment)
 }
 
 enum PlayerOption {
@@ -192,10 +203,6 @@ const InitialiseElementsPoweredByLocalStorage = () => {
     localStorageKeys.player(1),
     PlayerOption.User
   )
-  elements.botDepth.textContent = GetLocalStorageItem(
-    localStorageKeys.botDepth,
-    '8'
-  )
 }
 
 const CreatePageManager = (initialPage: Page): PageManager => {
@@ -224,6 +231,8 @@ const CreatePageManager = (initialPage: Page): PageManager => {
     SetPage
   }
 }
+
+const resetStorageCallbackHandler = NewCallbackHandler()
 
 export const InitialiseElementEvents = (game: Game, bot: GameBot) => {
   const pageManager = CreatePageManager(Page.Menu)
@@ -298,16 +307,28 @@ export const InitialiseElementEvents = (game: Game, bot: GameBot) => {
     BUILD_TIME
   )})`
 
-  elements.botDepth.onclick = () => CycleBotDepth(1)
-  elements.botDepthMinus.onclick = () => CycleBotDepth(-1)
+  CyclicCounterManager(1, 16, 8, 1, 'botDepth', () => {})
+  CyclicCounterManager(0, 2000, 500, 50, 'botWaitPeriod', game.SetBotWaitPeriod)
+  CyclicCounterManager(
+    0,
+    2000,
+    500,
+    50,
+    'tileUpdatePeriod',
+    game.SetTileUpdatePeriod
+  )
 
   InitialiseElementsPoweredByLocalStorage()
   RenderScoreRecords(game)
 
+  resetStorageCallbackHandler.addCallback(
+    InitialiseElementsPoweredByLocalStorage
+  )
+  resetStorageCallbackHandler.addCallback(() => RenderScoreRecords(game))
+
   elements.resetStorage.onclick = () => {
     localStorage.clear()
-    InitialiseElementsPoweredByLocalStorage()
-    RenderScoreRecords(game)
+    resetStorageCallbackHandler.triggerCallbacks()
   }
 }
 

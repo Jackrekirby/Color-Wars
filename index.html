@@ -8,7 +8,7 @@
   </head>
   <body>
     <div id="gotoHome" class="hide">
-      <img src="assets/settings.png" alt="s" />
+      <img src="assets/back.png" alt="s" />
     </div>
 
     <div id="pageMenu" class="page">
@@ -41,13 +41,13 @@
           <label style="color: hsl(0, 100%, 50%); font-weight: bold"
             >Player One</label
           >
-          <div id="team1User" class="button teamUser">Bot</div>
+          <div id="player1User" class="button teamUser">Bot</div>
         </div>
         <div class="buttonWrapper">
           <label style="color: hsl(105, 100%, 50%); font-weight: bold"
             >Player Two</label
           >
-          <div id="team2User" class="button teamUser">User</div>
+          <div id="player2User" class="button teamUser">User</div>
         </div>
         <div class="buttonWrapper">
           <label>Bot Search Depth</label>
@@ -66,8 +66,22 @@
           <h1 class="left-pill">Color</h1>
           <h1 class="right-pill">Wars</h1>
         </div>
-        <h2>Settings</h2>
         <div id="version"></div>
+        <h2>Settings</h2>
+        <div class="buttonWrapper">
+          <label>Bot Wait Period (ms)</label>
+          <div>
+            <div id="botWaitPeriodMinus" class="button">-</div>
+            <div id="botWaitPeriod" class="button">500</div>
+          </div>
+        </div>
+        <div class="buttonWrapper">
+          <label>Tile Update Period (ms)</label>
+          <div>
+            <div id="tileUpdatePeriodMinus" class="button">-</div>
+            <div id="tileUpdatePeriod" class="button">500</div>
+          </div>
+        </div>
         <div id="resetStorage" class="button full">Reset Storage</div>
       </div>
     </div>
@@ -87,7 +101,7 @@
       <div id="gameTimer" class="boardStatus"></div>
       <div id="gameIteration" class="boardStatus"></div>
 
-      <div class="grid" id="grid">
+      <div class="grid" id="board">
         <!-- Tiles will be generated here -->
       </div>
       <div id="botStatus" class="boardStatus"></div>

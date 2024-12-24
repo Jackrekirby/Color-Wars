@@ -32,10 +32,16 @@ export interface Elements {
   openPageScoreRecords: HTMLElement
   openPageSettings: HTMLElement
   version: HTMLElement
+  botWaitPeriod: HTMLElement
+  tileUpdatePeriod: HTMLElement
+  botWaitPeriodMinus: HTMLElement
+  tileUpdatePeriodMinus: HTMLElement
 }
 
 export interface LocalStorageKeys {
   botDepth: 'botDepth'
+  botWaitPeriod: 'botWaitPeriod'
+  tileUpdatePeriod: 'tileUpdatePeriod'
   player: (index: number) => string
   scoreRecords: 'scoreRecords'
 }

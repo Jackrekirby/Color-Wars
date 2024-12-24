@@ -67,6 +67,6 @@ export interface Game {
   CanPlayerMove: (x: number, y: number) => boolean
   GetPlayerMoves: () => Position[]
   TerminateGame: () => void
-  SetAnimationPeriod: (animationPeriod: number) => void
+  SetTileUpdatePeriod: (tileUpdatePeriod: number) => void
   SetBotWaitPeriod: (botWaitPeriod: number) => void
 }
