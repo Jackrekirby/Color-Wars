@@ -1,4 +1,4 @@
-import { CallbackHandler } from './types'
+import { CallbackHandler } from './game/types'
 
 export const FormatDate = (date: Date): string => {
   const pad = (num: number): string => (num < 10 ? '0' + num : num.toString())

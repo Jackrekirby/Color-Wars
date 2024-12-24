@@ -14,7 +14,7 @@ class UpdateBuildTimePlugin {
 
             if (buildTime - this.lastBuildTime > 5000) {
                 const buildTimeFileContent = `export const BUILD_TIME = new Date('${buildTime.toISOString()}');`;
-                fs.writeFileSync(path.resolve(__dirname, 'src', 'build_time.ts'), buildTimeFileContent);
+                fs.writeFileSync(path.resolve(__dirname, 'src', 'front_end', 'build_time.ts'), buildTimeFileContent);
                 this.lastBuildTime = buildTime;
             }
 
@@ -24,16 +24,13 @@ class UpdateBuildTimePlugin {
 }
 module.exports = {
     mode: 'development',
-    entry: './src/index.ts',
+    entry: './src/front_end/index.ts',
     output: {
         filename: 'bundle.js',
-        path: path.resolve(__dirname, 'dist')
+        path: path.resolve(__dirname, 'src')
     },
     resolve: {
         extensions: ['.ts', '.js'],
-        fallback: {
-            crypto: require.resolve('crypto-browserify'),
-        },
     },
     module: {
         rules: [

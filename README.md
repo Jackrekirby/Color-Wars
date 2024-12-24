@@ -18,9 +18,7 @@ Fill the entire board with your color. Click on one of your tiles to increment i
 
 Install Emscripten to compile C++ to WASM.
 
-`emcc ".\color_wars\color_wars_cpp\color_wars\color_wars.cpp" -o ".\color_wars\color_wars_cpp\minimax.js" -s EXPORTED_FUNCTIONS="['_InitialiseMiniMax', '_malloc', '_free']" -s EXPORTED_RUNTIME_METHODS="['cwrap', 'getValue', 'setValue']" -O3`
-
-`emcc "C:\dev\Autumn 2024\color_wars\color_wars_cpp\color_wars\color_wars.cpp" -o "C:\dev\Autumn 2024\color_wars\color_wars_cpp\minimax.js" -s EXPORTED_FUNCTIONS="['_InitialiseMiniMax', '_malloc', '_free']" -s EXPORTED_RUNTIME_METHODS="['cwrap', 'getValue', 'setValue']" --emit-tsd "C:\dev\Autumn 2024\color_wars\color_wars_cpp\minimax.d.ts" -O3`
+`emcc "C:\dev\Autumn 2024\color_wars\src\bot_engine\main.cpp" -o "C:\dev\Autumn 2024\color_wars\src\front_end\bot\engine.js" -s EXPORTED_FUNCTIONS="['_InitBotEngine', '_malloc', '_free']" -s EXPORTED_RUNTIME_METHODS="['cwrap', 'getValue', 'setValue']" --emit-tsd "C:\dev\Autumn 2024\color_wars\src\front_end\bot\engine.js" -O3`
 
 ## Basics of Minimax
 

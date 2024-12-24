@@ -1,6 +1,6 @@
-import { GameBot } from './bot_cpp'
-import { BUILD_TIME } from './build_time'
-import { NewPlayerBot, NewPlayerUser, NewTile } from './game'
+import { GameBot } from '../bot/main'
+import { BUILD_TIME } from '../build_time'
+import { NewPlayerBot, NewPlayerUser, NewTile } from '../game/main'
 import {
   Game,
   Player,
@@ -8,50 +8,9 @@ import {
   ScoreRecord,
   ScoreRecords,
   Tile
-} from './types'
-import { FormatDate, millisToMMSS } from './utils'
-
-enum Page {
-  Menu = 'Menu',
-  Settings = 'Settings',
-  ScoreRecords = 'ScoreRecords',
-  NewGame = 'NewGame',
-  Game = 'Game'
-}
-
-interface PageElements {
-  Menu: HTMLElement
-  Settings: HTMLElement
-  ScoreRecords: HTMLElement
-  NewGame: HTMLElement
-  Game: HTMLElement
-}
-
-// TODO: consider seperating elements into pages
-interface Elements {
-  newGame: HTMLElement // start new game
-  gotoHome: HTMLElement // TODO: make this a go home button
-  players: HTMLElement[]
-  botDepth: HTMLElement
-  botDepthMinus: HTMLElement
-  resetStorage: HTMLElement
-  gameTimer: HTMLElement
-  botStatus: HTMLElement
-  round: HTMLElement
-  scoreboard: HTMLElement
-  board: HTMLElement
-  pages: PageElements
-  openPageNewGame: HTMLElement
-  openPageScoreRecords: HTMLElement
-  openPageSettings: HTMLElement
-  version: HTMLElement
-}
-
-interface LocalStorageKeys {
-  botDepth: 'botDepth'
-  player: (index: number) => string
-  scoreRecords: 'scoreRecords'
-}
+} from '../game/types'
+import { FormatDate, millisToMMSS } from '../utils'
+import { LocalStorageKeys, Elements, Page, PageManager } from './types'
 
 const localStorageKeys: LocalStorageKeys = {
   botDepth: 'botDepth',
@@ -238,11 +197,6 @@ const InitialiseElementsPoweredByLocalStorage = () => {
   )
 }
 
-interface PageManager {
-  GetPage: () => Page
-  SetPage: (page: Page) => void
-}
-
 const CreatePageManager = (initialPage: Page): PageManager => {
   let currentPage = initialPage
 
@@ -255,6 +209,9 @@ const CreatePageManager = (initialPage: Page): PageManager => {
       console.warn(`Attempting to set page to current page ${page}`)
       return
     }
+
+    // only show goto home button when not on home page
+    SetElementVisibility(elements.gotoHome, page !== Page.Menu)
 
     SetElementVisibility(elements.pages[currentPage], false)
     SetElementVisibility(elements.pages[page], true)

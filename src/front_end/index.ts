@@ -1,10 +1,10 @@
 // npx webpack --mode production
 
-import { CreateBot, GameBot } from './bot_cpp'
+import { CreateBot, GameBot } from './bot/main'
 import { BUILD_TIME } from './build_time'
-import { InitialiseElementEvents } from './dom'
-import { CreateGame } from './game'
-import { Game } from './types'
+import { InitialiseElementEvents } from './dom/main'
+import { CreateGame } from './game/main'
+import { Game } from './game/types'
 import { FormatDate } from './utils'
 
 const Main = async () => {

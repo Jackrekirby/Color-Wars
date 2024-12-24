@@ -38,6 +38,11 @@ export interface CallbackHandler {
   triggerCallbacks: () => void
 }
 
+export interface Position {
+  x: number
+  y: number
+}
+
 export interface Game {
   MakePlayerMove: (x: number, y: number) => Promise<boolean>
   GetWidth: () => number
@@ -55,4 +60,5 @@ export interface Game {
   AddEndOfGameCallback: (callback: VoidFunction) => void
   GetCurrentPlayerIndex: () => number
   CanPlayerMove: (x: number, y: number) => boolean
+  GetPlayerMoves: () => Position[]
 }

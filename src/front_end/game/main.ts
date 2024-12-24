@@ -1,4 +1,4 @@
-import { BotMakeMove } from './bot_cpp'
+import { BotMakeMove } from '../bot/main'
 import {
   ScoreRecord,
   PlayerUser,
@@ -8,9 +8,10 @@ import {
   PlayerIndex,
   Tile,
   Game,
-  ScoreRecords
+  ScoreRecords,
+  Position
 } from './types'
-import { NewCallbackHandler, Sleep } from './utils'
+import { NewCallbackHandler, Sleep } from '../utils'
 
 // GAME
 
@@ -62,6 +63,7 @@ export const CreateGame = (
   let round: number = 0
   let hasGameEnded: boolean = true
   let isPlayerMoving = false
+  const playerMoves: Position[] = []
   const players: Player[] = []
   const renderCallbackHandler = NewCallbackHandler()
   const newRoundCallbackHandler = NewCallbackHandler()
@@ -89,8 +91,9 @@ export const CreateGame = (
       hasGameEnded = true
       endOfGameCallbackHandler.triggerCallbacks()
     }
-
-    tiles.length = 0 // empties the array
+    // length=0 empties the array
+    playerMoves.length = 0
+    tiles.length = 0
     round = 0
     hasGameEnded = false
     // pass players as args
@@ -107,6 +110,10 @@ export const CreateGame = (
 
   const GetCurrentPlayerIndex = (): PlayerIndex => {
     return round % 2
+  }
+
+  const GetPlayerMoves = (): Position[] => {
+    return playerMoves
   }
 
   const IsValidTilePosition = (x: number, y: number): boolean => {
@@ -132,6 +139,11 @@ export const CreateGame = (
       throw Error(`SetTile(${x}, ${y}) invalid position`)
     }
     tiles[x + y * width] = tile
+  }
+
+  const PlayerSetTile = (x: number, y: number, tile: Tile) => {
+    SetTile(x, y, tile)
+    playerMoves.push({ x, y })
   }
 
   const TakeOverTile = (x: number, y: number, player: PlayerIndex): void => {
@@ -272,12 +284,12 @@ export const CreateGame = (
 
     if (tile.dots > 0 && tile.player === currentPlayerIndex) {
       const dots = Math.min(tile.dots + 1, 4)
-      SetTile(x, y, NewTile(dots, currentPlayerIndex))
+      PlayerSetTile(x, y, NewTile(dots, currentPlayerIndex))
       renderCallbackHandler.triggerCallbacks()
       await UpdateTiles()
       didPlayerMove = true
     } else if (tile.dots === 0 && round < 2) {
-      SetTile(x, y, NewTile(3, currentPlayerIndex))
+      PlayerSetTile(x, y, NewTile(3, currentPlayerIndex))
       renderCallbackHandler.triggerCallbacks()
       didPlayerMove = true
     }
@@ -360,7 +372,8 @@ export const CreateGame = (
     AddNewRoundCallback: newRoundCallbackHandler.addCallback,
     AddEndOfGameCallback: endOfGameCallbackHandler.addCallback,
     GetCurrentPlayerIndex,
-    CanPlayerMove
+    CanPlayerMove,
+    GetPlayerMoves
   }
 
   return state

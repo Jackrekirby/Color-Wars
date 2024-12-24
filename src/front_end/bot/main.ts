@@ -1,4 +1,4 @@
-import { Game } from './types'
+import { Game } from '../game/types'
 
 // records moves
 // record times
@@ -9,7 +9,7 @@ export interface GameBot {
 
 export const CreateBot = (): GameBot => {
   const script = document.createElement('script')
-  script.src = 'src/minimax.js'
+  script.src = 'src/bot/engine.js'
   document.head.appendChild(script)
   let isReady = false
 
