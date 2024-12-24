@@ -9,7 +9,7 @@ export interface GameBot {
 
 export const CreateBot = (): GameBot => {
   const script = document.createElement('script')
-  script.src = 'src/bot/engine.js'
+  script.src = 'src/front_end/bot/engine.js'
   document.head.appendChild(script)
   let isReady = false
 
@@ -51,7 +51,7 @@ export const BotMakeMove = (game: Game, depth: number) => {
   }
 
   // Wrap the `InitialiseMiniMax` function
-  const InitialiseMiniMax = Module.cwrap('InitialiseMiniMax', 'number', [
+  const InitBotEngine = Module.cwrap('InitBotEngine', 'number', [
     'number',
     'number',
     'number',
@@ -59,7 +59,7 @@ export const BotMakeMove = (game: Game, depth: number) => {
   ])
 
   // Call the function
-  const result = InitialiseMiniMax(
+  const result = InitBotEngine(
     boardPtr,
     depth,
     game.GetRound(),

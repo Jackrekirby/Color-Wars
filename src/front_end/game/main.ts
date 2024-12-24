@@ -53,16 +53,15 @@ export const NewTile = (dots: number, player: PlayerIndex): Tile => {
   return { dots, player }
 }
 
-export const CreateGame = (
-  width: number,
-  height: number,
-  animationPeriod: number,
-  botWaitPeriod: number
-): Game => {
+export const CreateGame = (): Game => {
   const tiles: Tile[] = []
   let round: number = 0
   let hasGameEnded: boolean = true
   let isPlayerMoving = false
+  let _animationPeriod: number = 500 // milliseconds
+  let _botWaitPeriod: number = 500 // milliseconds
+  let _width: number = 0
+  let _height: number = 0
   const playerMoves: Position[] = []
   const players: Player[] = []
   const renderCallbackHandler = NewCallbackHandler()
@@ -72,7 +71,7 @@ export const CreateGame = (
   const MakeComputerMove = async () => {
     const nextPlayer = players[GetCurrentPlayerIndex()]
     if (IsPlayerBot(nextPlayer)) {
-      await Sleep(botWaitPeriod)
+      await Sleep(_botWaitPeriod)
       const result = BotMakeMove(state, nextPlayer.searchDepth)
       if (result) {
         const [x, y] = result
@@ -83,14 +82,25 @@ export const CreateGame = (
 
   newRoundCallbackHandler.addCallback(MakeComputerMove)
 
+  const SetAnimationPeriod = (animationPeriod: number) => {
+    _animationPeriod = animationPeriod
+  }
+
+  const SetBotWaitPeriod = (botWaitPeriod: number) => {
+    _botWaitPeriod = botWaitPeriod
+  }
+
   const NewGame = async (
+    width: number,
+    height: number,
     playerOne: Player,
     playerTwo: Player
   ): Promise<void> => {
     if (!hasGameEnded) {
-      hasGameEnded = true
-      endOfGameCallbackHandler.triggerCallbacks()
+      TerminateGame()
     }
+    _width = width
+    _height = height
     // length=0 empties the array
     playerMoves.length = 0
     tiles.length = 0
@@ -108,6 +118,11 @@ export const CreateGame = (
     newRoundCallbackHandler.triggerCallbacks()
   }
 
+  const TerminateGame = () => {
+    hasGameEnded = true
+    endOfGameCallbackHandler.triggerCallbacks()
+  }
+
   const GetCurrentPlayerIndex = (): PlayerIndex => {
     return round % 2
   }
@@ -117,28 +132,28 @@ export const CreateGame = (
   }
 
   const IsValidTilePosition = (x: number, y: number): boolean => {
-    return !(x < 0 || x >= width || y < 0 || y >= height)
+    return !(x < 0 || x >= _width || y < 0 || y >= _height)
   }
 
   const GetOptionalTile = (x: number, y: number): Tile | null => {
     if (!IsValidTilePosition(x, y)) {
       return null
     }
-    return tiles[x + y * width]
+    return tiles[x + y * _width]
   }
 
   const GetTile = (x: number, y: number): Tile => {
     if (!IsValidTilePosition(x, y)) {
       throw Error(`GetTile(${x}, ${y}) invalid position`)
     }
-    return tiles[x + y * width]
+    return tiles[x + y * _width]
   }
 
   const SetTile = (x: number, y: number, tile: Tile): void => {
     if (!IsValidTilePosition(x, y)) {
       throw Error(`SetTile(${x}, ${y}) invalid position`)
     }
-    tiles[x + y * width] = tile
+    tiles[x + y * _width] = tile
   }
 
   const PlayerSetTile = (x: number, y: number, tile: Tile) => {
@@ -158,8 +173,8 @@ export const CreateGame = (
 
   const GetTileUpdateCallbacks = () => {
     let callbacks = []
-    for (let y = 0; y < height; y++) {
-      for (let x = 0; x < width; x++) {
+    for (let y = 0; y < _height; y++) {
+      for (let x = 0; x < _width; x++) {
         const tile = GetTile(x, y)
         if (tile.dots >= 4) {
           callbacks.push(() => {
@@ -178,7 +193,7 @@ export const CreateGame = (
   const UpdateTilesOneIteration = async (): Promise<boolean> => {
     const callbacks: (() => void)[] = GetTileUpdateCallbacks()
     if (callbacks.length > 0) {
-      await Sleep(animationPeriod)
+      await Sleep(_animationPeriod)
       for (const callback of callbacks) {
         callback()
       }
@@ -195,8 +210,8 @@ export const CreateGame = (
 
   const GetPlayerScores = (): number[] => {
     let score = [0, 0] // player 1, player 2
-    for (let y = 0; y < height; y++) {
-      for (let x = 0; x < width; x++) {
+    for (let y = 0; y < _height; y++) {
+      for (let x = 0; x < _width; x++) {
         const tile = GetTile(x, y)
         score[tile.player] += tile.dots
       }
@@ -212,8 +227,7 @@ export const CreateGame = (
     if (_hasGameEnded) {
       const winningPlayerIndex: PlayerIndex = playerScores[1] === 0 ? 0 : 1
       UpdateScoreRecords(winningPlayerIndex)
-      hasGameEnded = true
-      endOfGameCallbackHandler.triggerCallbacks()
+      TerminateGame()
     }
 
     if (hasGameEnded) {
@@ -322,8 +336,8 @@ export const CreateGame = (
     const reset = '\x1b[0m' // Resets the color back to default
 
     let boardStr = ''
-    for (let y = 0; y < height; y++) {
-      for (let x = 0; x < width; x++) {
+    for (let y = 0; y < _height; y++) {
+      for (let x = 0; x < _width; x++) {
         const tile = GetTile(x, y)
         if (tile.dots === 0) {
           boardStr += '# '
@@ -338,10 +352,10 @@ export const CreateGame = (
   }
 
   const GetWidth = (): number => {
-    return width
+    return _width
   }
   const GetHeight = (): number => {
-    return height
+    return _height
   }
   const GetTiles = (): Tile[] => {
     return tiles
@@ -356,7 +370,7 @@ export const CreateGame = (
     return players
   }
 
-  const state = {
+  const state: Game = {
     MakePlayerMove,
     GetWidth,
     GetHeight,
@@ -373,7 +387,10 @@ export const CreateGame = (
     AddEndOfGameCallback: endOfGameCallbackHandler.addCallback,
     GetCurrentPlayerIndex,
     CanPlayerMove,
-    GetPlayerMoves
+    GetPlayerMoves,
+    TerminateGame,
+    SetAnimationPeriod,
+    SetBotWaitPeriod
   }
 
   return state

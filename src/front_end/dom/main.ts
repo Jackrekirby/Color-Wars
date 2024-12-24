@@ -5,6 +5,7 @@ import {
   Game,
   Player,
   PlayerIndex,
+  Position,
   ScoreRecord,
   ScoreRecords,
   Tile
@@ -225,7 +226,6 @@ const CreatePageManager = (initialPage: Page): PageManager => {
 }
 
 export const InitialiseElementEvents = (game: Game, bot: GameBot) => {
-  InitialiseBoard(game)
   const pageManager = CreatePageManager(Page.Menu)
 
   game.AddNewRoundCallback(() => {
@@ -235,6 +235,16 @@ export const InitialiseElementEvents = (game: Game, bot: GameBot) => {
 
   game.AddRenderCallback(() => {
     UpdateBoard(game)
+
+    const playerMoves: Position[] = game.GetPlayerMoves()
+
+    if (playerMoves.length > 0) {
+      const playerIndex: PlayerIndex = game.GetCurrentPlayerIndex()
+      RemoveLastPlayerMoveStyle()
+      const { x, y } = playerMoves.at(-1) as Position
+      const tileElement = GetTileElement(x, y)
+      tileElement.classList.add(`lastMoveOfPlayer${playerIndex + 1}`)
+    }
   })
 
   game.AddEndOfGameCallback(() => {
@@ -249,7 +259,12 @@ export const InitialiseElementEvents = (game: Game, bot: GameBot) => {
     if (!bot.IsReady()) {
       console.warn('Bot is not ready for a new game')
     }
-    game.NewGame(MakePlayer(0), MakePlayer(1))
+    const width: number = 5
+    const height: number = 5
+
+    game.NewGame(width, height, MakePlayer(0), MakePlayer(1))
+
+    InitialiseBoard(game)
 
     InitialiseUpdateTeamElapsedTime(game)
 
@@ -260,6 +275,7 @@ export const InitialiseElementEvents = (game: Game, bot: GameBot) => {
 
   elements.gotoHome.onclick = () => {
     pageManager.SetPage(Page.Menu)
+    game.TerminateGame()
   }
 
   elements.openPageNewGame.onclick = () => {
@@ -337,6 +353,14 @@ const RemoveClassFromElementByPrefix = (
   if (totalDotsClass) {
     element.classList.remove(totalDotsClass)
   }
+}
+
+const GetTileElement = (x: number, y: number): HTMLElement => {
+  const tileElement = document.getElementById(GetTileElementId(x, y))
+  if (tileElement === null) {
+    throw new Error(`Tile element at (${x}, ${y}) is null`)
+  }
+  return tileElement
 }
 
 const GetDotElementOfTile = (
@@ -418,7 +442,11 @@ const RemoveLastPlayerMoveStyle = () => {
 const InitialiseBoard = (game: Game): void => {
   const height = game.GetHeight()
   const width = game.GetWidth()
-  const tile = NewTile(0, 0) // default tile
+
+  // delete board children
+  while (elements.board.firstChild) {
+    elements.board.removeChild(elements.board.firstChild)
+  }
 
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
@@ -443,11 +471,6 @@ const InitialiseBoard = (game: Game): void => {
         if (!canPlayerMove) {
           return
         }
-        const playerIndex: PlayerIndex = game.GetCurrentPlayerIndex()
-
-        RemoveLastPlayerMoveStyle()
-
-        tileElement.classList.add(`lastMoveOfPlayer${playerIndex + 1}`)
 
         await game.MakePlayerMove(x, y)
 

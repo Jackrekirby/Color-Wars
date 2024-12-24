@@ -263,7 +263,7 @@ int Minimax(const int gameIteration, const int depth, const int maxDepth, int al
 
 
 // WASM
-extern "C" int InitialiseMiniMax(const Board& board, const int depth, const int gameIteration, const int team) {
+extern "C" int InitBotEngine(const Board& board, const int depth, const int gameIteration, const int team) {
     int nodesSearched = 0;
     const int i = Minimax(gameIteration, 0, depth, MIN_SCORE, MAX_SCORE, board, team, nodesSearched);
     //LOGI("nodesSearched " << nodesSearched);
@@ -286,7 +286,7 @@ void SimpleTest() {
             LOG("team " << team << " has lost");
             break;
         }
-        const int i = InitialiseMiniMax(board, 8, n, team);
+        const int i = InitBotEngine(board, 8, n, team);
         if (i == 25) {
             LOG("computer did not pick move");
             break;
@@ -339,7 +339,7 @@ void PerformanceTest(const int n) {
 
     Timer t = Timer();
     //for (int i = 0; i < n; ++i) {
-    j += InitialiseMiniMax(board, 8, 55, 0);
+    j += InitBotEngine(board, 8, 55, 0);
     //}
     const int x = j % 5;
     const int y = j / 5;

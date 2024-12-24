@@ -52,7 +52,12 @@ export interface Game {
   GetHasGameEnded: () => boolean
   GetPlayers: () => Player[]
   LogBoard: () => void
-  NewGame: (playerOne: Player, playerTwo: Player) => void
+  NewGame: (
+    width: number,
+    height: number,
+    playerOne: Player,
+    playerTwo: Player
+  ) => void
   GetScoreRecords: () => ScoreRecords
   GetTile: (x: number, y: number) => Tile
   AddRenderCallback: (callback: VoidFunction) => void
@@ -61,4 +66,7 @@ export interface Game {
   GetCurrentPlayerIndex: () => number
   CanPlayerMove: (x: number, y: number) => boolean
   GetPlayerMoves: () => Position[]
+  TerminateGame: () => void
+  SetAnimationPeriod: (animationPeriod: number) => void
+  SetBotWaitPeriod: (botWaitPeriod: number) => void
 }
