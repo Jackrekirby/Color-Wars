@@ -20,14 +20,22 @@ export interface PlayerBot {
 
 export interface ScoreRecord {
   round: number
-  scores: number[]
+  winningPlayerIndex: PlayerIndex
 }
+
+export type ScoreRecords = { [key: string]: ScoreRecord | null }
 
 export type Player = PlayerUser | PlayerBot
 
 export interface Tile {
   dots: number
   player: PlayerIndex
+}
+
+export type VoidFunction = () => void
+export interface CallbackHandler {
+  addCallback: (callback: VoidFunction) => void
+  triggerCallbacks: () => void
 }
 
 export interface Game {
@@ -39,4 +47,12 @@ export interface Game {
   GetHasGameEnded: () => boolean
   GetPlayers: () => Player[]
   LogBoard: () => void
+  NewGame: (playerOne: Player, playerTwo: Player) => void
+  GetScoreRecords: () => ScoreRecords
+  GetTile: (x: number, y: number) => Tile
+  AddRenderCallback: (callback: VoidFunction) => void
+  AddNewRoundCallback: (callback: VoidFunction) => void
+  AddEndOfGameCallback: (callback: VoidFunction) => void
+  GetCurrentPlayerIndex: () => number
+  CanPlayerMove: (x: number, y: number) => boolean
 }

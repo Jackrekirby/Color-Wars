@@ -55,29 +55,27 @@ body {
     rgba(45, 35, 66, 0.3) 0 7px 13px -3px, hsl(30, 3%, 24%) 0 -3px 0 inset;
 }
 
-.tile.team1 {
+/* .tile.team1 {
   background-color: hsl(0, 100%, 80%);
   color: hsl(0, 100%, 50%);
-  /* box-shadow: 0 2px 5px hsla(0, 100%, 50%, 0.5); */
 }
 
 .tile.team2 {
   background-color: hsl(105, 100%, 80%);
   color: hsl(105, 100%, 50%);
-}
-.tile.lastMove {
-  color: var(--dark-gray);
-}
+} */
 
-.tile.lastMove.team2 {
+.tile.lastMoveOfPlayer2 {
   background-color: hsl(105, 100%, 50%) !important;
 }
 
-.tile.lastMove.team1 {
+.tile.lastMoveOfPlayer1 {
   background-color: hsl(0, 100%, 50%) !important;
-  /* border: 1px solid hsl(0, 100%, 50%); */
-  /* color: hsl(0, 100%, 95%); */
-  /* box-shadow: 0 2px 5px hsla(0, 100%, 50%, 0.5); */
+}
+
+.tile.lastMoveOfPlayer1 > .dot,
+.tile.lastMoveOfPlayer2 > .dot {
+  background-color: var(--dark-gray) !important;
 }
 
 .hide {
@@ -274,7 +272,11 @@ p {
   font-size: 16px;
 }
 
-#settings {
+#version {
+  padding: 8px 0px;
+}
+
+#gotoHome {
   position: absolute;
   top: 16px;
   right: 16px;
@@ -283,11 +285,11 @@ p {
   cursor: pointer;
   z-index: 100;
 }
-#settings img {
+#gotoHome img {
   width: 100%;
   height: 100%;
 }
-#settingsPanel {
+.page {
   position: absolute;
   top: 0;
   left: 0;
@@ -302,7 +304,7 @@ p {
   align-items: center;
   justify-content: center;
 }
-#settingsPanelInternal {
+.pageInternal {
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -313,20 +315,20 @@ p {
 }
 
 /* Custom scrollbar styles */
-#settingsPanelInternal::-webkit-scrollbar {
+.pageInternal::-webkit-scrollbar {
   width: 4px;
 }
 
-#settingsPanelInternal::-webkit-scrollbar-track {
+.pageInternal::-webkit-scrollbar-track {
   background: #f1f1f1;
 }
 
-#settingsPanelInternal::-webkit-scrollbar-thumb {
+.pageInternal::-webkit-scrollbar-thumb {
   background: #888;
   border-radius: 6px;
 }
 
-#settingsPanelInternal::-webkit-scrollbar-thumb:hover {
+.pageInternal::-webkit-scrollbar-thumb:hover {
   background: #555;
 }
 #gameScreen {
@@ -339,7 +341,7 @@ p {
   margin: 0;
   overflow: hidden;
 }
-#scoreboard {
+#scoreRecords {
   margin-bottom: 32px;
 }
 

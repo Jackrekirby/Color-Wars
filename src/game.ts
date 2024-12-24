@@ -1,3 +1,4 @@
+import { BotMakeMove } from './bot_cpp'
 import {
   ScoreRecord,
   PlayerUser,
@@ -6,23 +7,27 @@ import {
   Player,
   PlayerIndex,
   Tile,
-  Game
+  Game,
+  ScoreRecords
 } from './types'
-import { Sleep } from './utils'
+import { NewCallbackHandler, Sleep } from './utils'
 
 // GAME
 
 const LOCAL_STORAGE_SCORE_RECORDS: string = 'score_records'
 
-const NewScoreRecord = (round: number, scores: number[]): ScoreRecord => {
-  return { round, scores }
+const NewScoreRecord = (
+  round: number,
+  winningPlayerIndex: PlayerIndex
+): ScoreRecord => {
+  return { round, winningPlayerIndex }
 }
 
-const NewPlayerUser = (name: string = 'User'): PlayerUser => {
+export const NewPlayerUser = (name: string = 'User'): PlayerUser => {
   return { type: PlayerType.User, name }
 }
 
-const NewPlayerBot = (searchDepth: number): PlayerBot => {
+export const NewPlayerBot = (searchDepth: number): PlayerBot => {
   return { type: PlayerType.Bot, searchDepth }
 }
 
@@ -43,29 +48,62 @@ const PlayerToIdentifier = (player: Player) => {
   throw Error(`PlayerToIdentifier(${player}) not implemented`)
 }
 
-const NewTile = (dots: number, player: PlayerIndex): Tile => {
+export const NewTile = (dots: number, player: PlayerIndex): Tile => {
   return { dots, player }
 }
 
-export const NewGame = (
+export const CreateGame = (
   width: number,
   height: number,
-  animationPeriod: number
+  animationPeriod: number,
+  botWaitPeriod: number
 ): Game => {
   const tiles: Tile[] = []
   let round: number = 0
-  let hasGameEnded: boolean = false
-  const players: Player[] = [NewPlayerUser(), NewPlayerUser()]
+  let hasGameEnded: boolean = true
+  let isPlayerMoving = false
+  const players: Player[] = []
+  const renderCallbackHandler = NewCallbackHandler()
+  const newRoundCallbackHandler = NewCallbackHandler()
+  const endOfGameCallbackHandler = NewCallbackHandler()
 
-  const InitialiseGame = (): void => {
+  const MakeComputerMove = async () => {
+    const nextPlayer = players[GetCurrentPlayerIndex()]
+    if (IsPlayerBot(nextPlayer)) {
+      await Sleep(botWaitPeriod)
+      const result = BotMakeMove(state, nextPlayer.searchDepth)
+      if (result) {
+        const [x, y] = result
+        MakePlayerMove(x, y)
+      }
+    }
+  }
+
+  newRoundCallbackHandler.addCallback(MakeComputerMove)
+
+  const NewGame = async (
+    playerOne: Player,
+    playerTwo: Player
+  ): Promise<void> => {
+    if (!hasGameEnded) {
+      hasGameEnded = true
+      endOfGameCallbackHandler.triggerCallbacks()
+    }
+
+    tiles.length = 0 // empties the array
+    round = 0
+    hasGameEnded = false
+    // pass players as args
+    players[0] = playerOne
+    players[1] = playerTwo
+
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
         tiles.push(NewTile(0, 0))
       }
     }
+    newRoundCallbackHandler.triggerCallbacks()
   }
-
-  InitialiseGame()
 
   const GetCurrentPlayerIndex = (): PlayerIndex => {
     return round % 2
@@ -103,7 +141,7 @@ export const NewGame = (
     }
 
     const dots = Math.min(tile.dots + 1, 4)
-    SetTile(x, y, NewTile(dots, tile.player))
+    SetTile(x, y, NewTile(dots, player))
   }
 
   const GetTileUpdateCallbacks = () => {
@@ -138,7 +176,9 @@ export const NewGame = (
   }
 
   const UpdateTiles = async () => {
-    while (await UpdateTilesOneIteration()) {}
+    while (await UpdateTilesOneIteration()) {
+      renderCallbackHandler.triggerCallbacks()
+    }
   }
 
   const GetPlayerScores = (): number[] => {
@@ -158,8 +198,10 @@ export const NewGame = (
       round >= 2 && playerScores.some(score => score === 0)
 
     if (_hasGameEnded) {
-      UpdateScoreRecords(playerScores)
+      const winningPlayerIndex: PlayerIndex = playerScores[1] === 0 ? 0 : 1
+      UpdateScoreRecords(winningPlayerIndex)
       hasGameEnded = true
+      endOfGameCallbackHandler.triggerCallbacks()
     }
 
     if (hasGameEnded) {
@@ -167,32 +209,32 @@ export const NewGame = (
     }
 
     round++
+    newRoundCallbackHandler.triggerCallbacks()
   }
 
-  const UpdateScoreRecords = (playerScores: number[]) => {
-    const playersIdentifer: string = players
-      .map(player => PlayerToIdentifier(player))
-      .join(' Vs ')
+  const GetScoreRecords = (): ScoreRecords => {
     const scoreRecordString: string | null = localStorage.getItem(
       LOCAL_STORAGE_SCORE_RECORDS
     )
-    const scoreRecords =
+    const scoreRecords: { [key: string]: ScoreRecord | null } =
       scoreRecordString === null ? {} : JSON.parse(scoreRecordString)
-    if (!scoreRecords[playersIdentifer]) {
-      scoreRecords[playersIdentifer] = {}
-    }
+    return scoreRecords
+  }
+
+  const UpdateScoreRecords = (winningPlayerIndex: PlayerIndex) => {
+    const playersIdentifer: string = players
+      .map(player => PlayerToIdentifier(player))
+      .join(' Vs ')
+    const scoreRecords: ScoreRecords = GetScoreRecords()
 
     let previousScoreRecord: ScoreRecord =
-      scoreRecords[playersIdentifer] || NewScoreRecord(0, [0, 0])
+      scoreRecords[playersIdentifer] || NewScoreRecord(0, 0)
     let doUpdateRecord = false
     if (players.some(IsPlayerUser) && players.some(IsPlayerBot)) {
       const playerIndexOfUser: number = players.findIndex(IsPlayerUser)
-      const playerIndexOfBot: number = players.findIndex(IsPlayerBot)
-      const didUserWin: boolean =
-        playerScores[playerIndexOfUser] > playerScores[playerIndexOfBot]
+      const didUserWin: boolean = playerIndexOfUser == winningPlayerIndex
       const hasUserWon: boolean =
-        previousScoreRecord.scores[playerIndexOfUser] >
-        previousScoreRecord.scores[playerIndexOfBot]
+        playerIndexOfUser === previousScoreRecord.winningPlayerIndex
 
       // update record if user has won and won in fewer rounds OR
       // if user has never won and lasted more rounds before losing
@@ -203,11 +245,14 @@ export const NewGame = (
         (!didUserWin && !hasUserWon && round > previousScoreRecord.round)
     } else {
       // if user vs user or bot vs bot just record latest score
-      doUpdateRecord = false
+      doUpdateRecord = true
     }
 
     if (doUpdateRecord) {
-      scoreRecords[playersIdentifer] = NewScoreRecord(round, playerScores)
+      scoreRecords[playersIdentifer] = NewScoreRecord(
+        Math.floor(round / 2), // round is realy game iteration (2 iterations = 1 round)
+        winningPlayerIndex
+      )
       localStorage.setItem(
         LOCAL_STORAGE_SCORE_RECORDS,
         JSON.stringify(scoreRecords)
@@ -216,6 +261,10 @@ export const NewGame = (
   }
 
   const MakePlayerMove = async (x: number, y: number): Promise<boolean> => {
+    if (isPlayerMoving) {
+      return false
+    }
+    isPlayerMoving = true
     const tile: Tile = GetTile(x, y)
 
     const currentPlayerIndex = GetCurrentPlayerIndex()
@@ -224,16 +273,35 @@ export const NewGame = (
     if (tile.dots > 0 && tile.player === currentPlayerIndex) {
       const dots = Math.min(tile.dots + 1, 4)
       SetTile(x, y, NewTile(dots, currentPlayerIndex))
-
+      renderCallbackHandler.triggerCallbacks()
       await UpdateTiles()
-      UpdateGameIteration()
       didPlayerMove = true
     } else if (tile.dots === 0 && round < 2) {
       SetTile(x, y, NewTile(3, currentPlayerIndex))
-      UpdateGameIteration()
+      renderCallbackHandler.triggerCallbacks()
       didPlayerMove = true
     }
+    isPlayerMoving = false
+    if (didPlayerMove) {
+      UpdateGameIteration()
+    }
     return didPlayerMove
+  }
+
+  const CanPlayerMove = (x: number, y: number): boolean => {
+    if (isPlayerMoving) {
+      return false
+    }
+
+    const tile: Tile = GetTile(x, y)
+    const currentPlayerIndex = GetCurrentPlayerIndex()
+
+    if (tile.dots > 0 && tile.player === currentPlayerIndex) {
+      return true
+    } else if (tile.dots === 0 && round < 2) {
+      return true
+    }
+    return false
   }
 
   const LogBoard = (): void => {
@@ -276,7 +344,7 @@ export const NewGame = (
     return players
   }
 
-  return {
+  const state = {
     MakePlayerMove,
     GetWidth,
     GetHeight,
@@ -284,6 +352,16 @@ export const NewGame = (
     GetRound,
     GetHasGameEnded,
     GetPlayers,
-    LogBoard
+    LogBoard,
+    NewGame,
+    GetScoreRecords,
+    GetTile,
+    AddRenderCallback: renderCallbackHandler.addCallback,
+    AddNewRoundCallback: newRoundCallbackHandler.addCallback,
+    AddEndOfGameCallback: endOfGameCallbackHandler.addCallback,
+    GetCurrentPlayerIndex,
+    CanPlayerMove
   }
+
+  return state
 }

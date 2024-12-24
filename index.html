@@ -7,9 +7,10 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <div id="settings"><img src="assets/settings.png" alt="s" /></div>
-    <div id="settingsPanel">
-      <div id="settingsPanelInternal">
+    <div id="gotoHome"><img src="assets/settings.png" alt="s" /></div>
+
+    <div id="pageMenu" class="page">
+      <div class="pageInternal">
         <div id="colorWarsTitle">
           <h1 class="left-pill">Color</h1>
           <h1 class="right-pill">Wars</h1>
@@ -20,13 +21,25 @@
           four one-point tiles, engulfing neighbouring tiles. One your first
           move place a tile of 3 points anywhere on the board.
         </p>
-        <div id="newGame" class="button full">New Game</div>
-        <h2>Settings</h2>
+
+        <div id="openPageNewGame" class="button full">New Game</div>
+        <div id="openPageScoreRecords" class="button full">Score Records</div>
+        <div id="openPageSettings" class="button full">Settings</div>
+      </div>
+    </div>
+
+    <div id="pageNewGame" class="page hide">
+      <div class="pageInternal">
+        <div id="colorWarsTitle">
+          <h1 class="left-pill">Color</h1>
+          <h1 class="right-pill">Wars</h1>
+        </div>
+        <h2>Game Options</h2>
         <div class="buttonWrapper">
           <label style="color: hsl(0, 100%, 50%); font-weight: bold"
             >Player One</label
           >
-          <div id="team1User" class="button teamUser">C++ Bot</div>
+          <div id="team1User" class="button teamUser">Bot</div>
         </div>
         <div class="buttonWrapper">
           <label style="color: hsl(105, 100%, 50%); font-weight: bold"
@@ -41,13 +54,34 @@
             <div id="botDepth" class="button">8</div>
           </div>
         </div>
-        <div id="resetStorage" class="button full">Reset Storage</div>
-
-        <h2>Scoreboard</h2>
-        <div id="scoreboard"></div>
+        <div id="newGame" class="button full">Start Game</div>
       </div>
     </div>
-    <div id="gameScreen" class="hide">
+
+    <div id="pageSettings" class="page hide">
+      <div class="pageInternal">
+        <div id="colorWarsTitle">
+          <h1 class="left-pill">Color</h1>
+          <h1 class="right-pill">Wars</h1>
+        </div>
+        <h2>Settings</h2>
+        <div id="version"></div>
+        <div id="resetStorage" class="button full">Reset Storage</div>
+      </div>
+    </div>
+
+    <div id="pageScoreRecords" class="page hide">
+      <div class="pageInternal">
+        <div id="colorWarsTitle">
+          <h1 class="left-pill">Color</h1>
+          <h1 class="right-pill">Wars</h1>
+        </div>
+        <h2>Score Records</h2>
+        <div id="scoreRecords"></div>
+      </div>
+    </div>
+
+    <div id="pageGame" class="hide">
       <div id="gameTimer" class="boardStatus"></div>
       <div id="gameIteration" class="boardStatus"></div>
 
@@ -57,7 +91,6 @@
       <div id="botStatus" class="boardStatus"></div>
     </div>
   </body>
-  <script src="color_wars_cpp/minimax.js"></script>
-  <script src="wasm_exec.js"></script>
-  <script src="index.js"></script>
+
+  <script src="dist/bundle.js"></script>
 </html>
